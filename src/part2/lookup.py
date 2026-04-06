@@ -2,6 +2,7 @@ import requests
 import argparse
 import csv
 from tabulate import tabulate
+from pathlib import Path
 
 def main():
     # 1. Thiết lập công cụ để đọc chữ bạn gõ trên Terminal
@@ -50,23 +51,38 @@ def main():
             print(tabulate(bang_hien_thi, headers=headers_man_hinh, tablefmt="grid"))
             
             # --- 2. XUẤT RA FILE CSV ---
-            # Tạo tên file dựa trên tham số đầu vào (thay thế dấu cách bằng dấu gạch dưới)
+            current_dir = Path(__file__).parent
+            data_dir = current_dir.parent.parent / 'data'
+
+            # ---> BƯỚC 1: XÁC ĐỊNH THƯ MỤC CON <---
+            # Đổi 'ket_qua' thành tên folder bạn muốn lưu vào
+            thu_muc_luu = data_dir / 'lookup_ans' 
+            
+            # ---> BƯỚC 2: TẠO THƯ MỤC NẾU CHƯA CÓ <---
+            # parents=True: Tạo luôn cả các thư mục cha nếu thiếu
+            # exist_ok=True: Nếu thư mục đã tồn tại thì bỏ qua, không báo lỗi
+            thu_muc_luu.mkdir(parents=True, exist_ok=True) 
+
+            # tạo tên file
             ten_file = ""
             if args.name:
                 ten_file = f"{args.name.replace(' ', '_')}.csv"
             else:
                 ten_file = f"{args.club.replace(' ', '_')}.csv"
+            
+            # ---> BƯỚC 3: GHÉP THƯ MỤC LƯU VÀ TÊN FILE <---
+            duong_dan_file = thu_muc_luu / ten_file
                 
             # Lấy tên tất cả các cột từ dữ liệu của cầu thủ đầu tiên
             tat_ca_cot = data[0].keys()
             
             # Mở file và ghi dữ liệu
-            with open(ten_file, mode='w', newline='', encoding='utf-8-sig') as f:
+            with open(duong_dan_file, mode='w', newline='', encoding='utf-8-sig') as f:
                 writer = csv.DictWriter(f, fieldnames=tat_ca_cot)
-                writer.writeheader() # Ghi dòng tiêu đề
-                writer.writerows(data) # Ghi toàn bộ dữ liệu
+                writer.writeheader() 
+                writer.writerows(data) 
                 
-            print(f"\n✅ Đã lưu toàn bộ chỉ số chi tiết vào file: {ten_file}")
+            print(f"\n✅ Đã lưu toàn bộ chỉ số chi tiết vào file: {duong_dan_file}")
 
         else:
             print("❌ Không tìm thấy cầu thủ hoặc câu lạc bộ này.")
