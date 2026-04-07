@@ -1,84 +1,67 @@
 import sqlite3
+import pandas as pd
+import os
+import io
+import numpy as np
 from seleniumbase import SB
-from bs4 import BeautifulSoup
 
-DB_NAME = "football_analysis_2024_2025.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "database.db")
 
-def init_db():
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('DROP TABLE IF EXISTS fbref_stats')
-    # Thêm cột minutes_90s vào bảng
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS fbref_stats (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            squad TEXT,
-            minutes INTEGER,
-            minutes_90s REAL,
-            goals TEXT,
-            assists TEXT
-        )
-    ''')
-    conn.commit()
-    return conn
-
-def crawl_fbref_90s():
-    conn = init_db()
-    cursor = conn.cursor()
+def crawl_fbref_final():
     url = "https://fbref.com/en/comps/9/2024-2025/stats/2024-2025-Premier-League-Stats"
     
-    try:
-        # Sử dụng SeleniumBase với UC để tránh Captcha
-        with SB(uc=True, headless=False) as sb:
-            print(f"[+] Đang mở trình duyệt lấy dữ liệu: {url}")
-            sb.open(url)
+    with SB(uc=True, headless=False) as sb:
+        print("[1/4] Đang truy cập FBRef...")
+        sb.open(url)
+        try:
             sb.wait_for_element("#stats_standard", timeout=20)
-            
-            # Lấy HTML động từ trình duyệt
-            soup = BeautifulSoup(sb.get_page_source(), 'lxml')
-            rows = soup.select("#stats_standard tbody tr:not(.thead)")
-            
-            players_saved = 0
-            for row in rows:
-                # Hàm lấy giá trị dựa trên data-stat
-                def get_val(field):
-                    cell = row.find(['td', 'th'], {"data-stat": field})
-                    return cell.get_text(strip=True) if cell else "N/a"
+            html_source = sb.get_page_source()
+        except Exception as e:
+            return print(f"Lỗi tải bảng: {e}")
 
-                # Lấy số phút thực tế để lọc > 90 phút
-                min_str = get_val("minutes").replace(",", "")
-                minutes = int(min_str) if min_str.isdigit() else 0
+    print("[2/4] Tối ưu hóa dữ liệu bằng thuật toán...")
+    try:
+        # 1. Đọc và lấy 25 cột đầu tiên
+        df = pd.read_html(io.StringIO(html_source), attrs={'id': 'stats_standard'})[0]
+        final_df = df[df.iloc[:, 1] != 'Player'].iloc[:, :25].copy()
+        raw_cols = df.columns.get_level_values(1)[:25]
 
-                if minutes > 90:
-                    name = get_val("player")
-                    squad = get_val("team")
-                    
-                    # LẤY CHỈ SỐ 90s (data-stat="minutes_90s")
-                    # Chỉ số này thường là số thập phân (VD: 1.5, 10.2)
-                    nineties_val = get_val("minutes_90s")
-                    try:
-                        nineties = float(nineties_val)
-                    except ValueError:
-                        nineties = 0.0
+        # 2. Thuật toán đặt tên cột tự động (Ngắn gọn)
+        counts = pd.Series(raw_cols).groupby(raw_cols).cumcount()
+        totals = pd.Series(raw_cols).map(pd.Series(raw_cols).value_counts())
+        
+        new_cols = []
+        for name, count, total in zip(raw_cols, counts, totals):
+            if total > 1:
+                suffix = "_performance" if count == 0 else "_per90minutes"
+                new_cols.append(f"{name}{suffix}")
+            else:
+                new_cols.append(name)
+        
+        final_df.columns = new_cols
 
-                    goals = get_val("goals")
-                    assists = get_val("assists")
+        # 3. Ép kiểu số & Làm sạch (Vectorized)
+        final_df['Age'] = final_df['Age'].str[:2]
+        final_df['Nation'] = final_df['Nation'].str.split().str[-1].fillna("N/a")
 
-                    # Lưu vào Database
-                    cursor.execute('''
-                        INSERT INTO fbref_stats (name, squad, minutes, minutes_90s, goals, assists)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                    ''', (name, squad, minutes, nineties, goals, assists))
-                    players_saved += 1
-            
-            conn.commit()
-            print(f"[+] Hoàn tất! Đã lưu {players_saved} cầu thủ. Cột '90s' đã được thu thập.")
+        # Chuyển tất cả cột có thể sang số, lọc > 90 phút
+        cols_to_fix = final_df.columns.difference(['Player', 'Nation', 'Pos', 'Squad', 'Matches'])
+        final_df[cols_to_fix] = final_df[cols_to_fix].apply(pd.to_numeric, errors='coerce')
+        final_df = final_df[final_df['Min'] > 90].reset_index(drop=True)
+
+        # 4. Chuyển 0 thành NULL (NaN) trừ cột Rk
+        null_targets = cols_to_fix.difference(['Rk'])
+        final_df[null_targets] = final_df[null_targets].replace({0: np.nan, 0.0: np.nan})
+
+        print(f"[3/4] Ghi {len(final_df)} dòng vào database...")
+        with sqlite3.connect(DB_PATH) as conn:
+            final_df.to_sql("statistic", conn, if_exists="replace", index=False)
+        
+        print("HOÀN TẤT!")
 
     except Exception as e:
-        print(f"[-] Lỗi: {e}")
-    finally:
-        conn.close()
+        print(f"Lỗi: {e}")
 
 if __name__ == "__main__":
-    crawl_fbref_90s()
+    crawl_fbref_final()
