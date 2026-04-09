@@ -1,6 +1,5 @@
 from sklearn.preprocessing import RobustScaler
 from sklearn.metrics import silhouette_score
-from mpl_toolkits.mplot3d import Axes3D
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 from pathlib import Path
@@ -29,7 +28,7 @@ def fetch_data():
         return df
 
 
-def display_chart(elbow: list, silhouettes: list, max_k=10):
+def create_charts(elbow: list, silhouettes: list, max_k=10):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
     
     ax1.plot(range(2, max_k + 1), elbow, marker='o', color='b')
@@ -39,7 +38,8 @@ def display_chart(elbow: list, silhouettes: list, max_k=10):
     ax2.set_title('Silhouettes chart')
 
     plt.tight_layout()
-    plt.show()
+    plt.savefig(str(path / "Elbow and Silhouettes chart"), dpi=900, bbox_inches='tight', facecolor='white')
+    # plt.show()
 
 
 def tryKclutters(data: pd.DataFrame, max_k=10):
@@ -52,12 +52,11 @@ def tryKclutters(data: pd.DataFrame, max_k=10):
         elbow.append(kmeans.inertia_)
         silhouettes.append(silhouette_score(data, kmeans.labels_))
 
-    # display_chart(elbow, silhouettes, max_k)
+    create_charts(elbow, silhouettes, max_k)
 
 
 def reshape(df: pd.DataFrame, dimen: int):
-    scaled_data = RobustScaler().fit_transform(df)
-    new_arr = PCA(n_components=dimen).fit_transform(scaled_data)
+    new_arr = PCA(n_components=dimen).fit_transform(df)
 
     cols = ['X', 'Y']
     if dimen == 3: cols.append('Z')
@@ -86,12 +85,12 @@ def scatter_chart(df: pd.DataFrame, kmeans: KMeans, dimen: int):
 
 
 if __name__ == '__main__':
-    df = fetch_data()
-    df = pd.DataFrame(RobustScaler().fit_transform(df))
-    # tryKclutters(df)
+    raw_data = fetch_data()
+    scaled_data = pd.DataFrame(RobustScaler().fit_transform(raw_data))
+    tryKclutters(scaled_data)
 
-    bestK = 3 # int(input('Enter best K for K-Means Algorithm: '))
-    kmeans = KMeans(n_clusters=bestK, init='k-means++', n_init=10).fit(df)
+    bestK = int(input('Enter best K for K-Means Algorithm: '))
+    kmeans = KMeans(n_clusters=bestK, init='k-means++', n_init=10).fit(scaled_data)
 
-    scatter_chart(df, kmeans, 2)
-    scatter_chart(df, kmeans, 3)
+    scatter_chart(scaled_data, kmeans, 2)
+    scatter_chart(scaled_data, kmeans, 3)
