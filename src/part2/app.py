@@ -4,19 +4,14 @@ from pathlib import Path
 
 app = Flask(__name__)
 
-# Hàm hỗ trợ kết nối database chuyên nghiệp hơn
+
 def get_db_connection():
-    # --- PHẦN ĐƯỢC SỬA ---
-    # Lấy đường dẫn thư mục hiện tại (part2)
     current_dir = Path(__file__).parent
-    # Lùi 2 cấp về thư mục gốc, rồi trỏ vào thư mục data
     db_path = current_dir.parent.parent / 'data' / 'database.db'
     
-    # Kết nối bằng đường dẫn động
     conn = sqlite3.connect(db_path)
-    # -----------------------
     
-    # Dòng này rất quan trọng: Giúp kết quả trả về có chứa tên cột
+    # Giúp kết quả trả về có chứa tên cột
     conn.row_factory = sqlite3.Row 
     return conn
 
