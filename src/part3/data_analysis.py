@@ -10,10 +10,9 @@ def calculate_stat():
     with sqlite3.connect(str(path / "database.db")) as conn:
         df = pd.read_sql("SELECT * FROM statistic", conn)
 
-        cols = ['Age', 'MP', 'Starts', 'Min', '90s', 'Gls_performance', 'Ast_performance',
-                'G+A_performance', 'G-PK_performance', 'PK', 'PKatt', 'CrdY', 'CrdR',
-                'Gls_per90minutes', 'Ast_per90minutes', 'G+A_per90minutes', 'G-PK_per90minutes',
-                'G+A-PK']
+        cols = ['Age', 'MP', 'Starts', 'Min', '90s', 'Gls_perf', 'Ast_perf', 'G+A_perf',
+                'G-PK_perf', 'PK_perf', 'PKatt_perf', 'CrdY_perf', 'CrdR_perf', 'Gls_per90',
+                'Ast_per90', 'G+A_per90', 'G-PK_per90', 'G+A-PK_per90']
         
         table = df.groupby('Squad')[cols].agg(['median', 'mean', 'std'])
         table.columns = [f"{col}_{stat}" for col, stat in table.columns]

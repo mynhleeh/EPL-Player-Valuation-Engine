@@ -7,7 +7,8 @@ path = base_dir / "data"
 def squads_ranking(data: pd.DataFrame):
     ref = pd.DataFrame()
 
-    ref['stat'] = ['G+A_per90minutes_mean', 'G-PK_per90minutes_mean', 'G+A_performance_median', 'Gls_per90minutes_std', 'CrdR_mean', 'CrdY_mean', 'Min_std']
+    ref['stat'] = ['G+A_per90_mean', 'G-PK_per90_mean', 'G+A_perf_median',
+                   'Gls_per90_std', 'CrdR_perf_mean', 'CrdY_perf_mean', 'Min_std']
     ref['prop'] = [1, 1, 1, -1, -1, -1, -1]
     ref['wei'] = [0.25, 0.2, 0.15, 0.1, 0.12, 0.08, 0.1]
 
