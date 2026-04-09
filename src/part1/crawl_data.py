@@ -5,63 +5,81 @@ import io
 import numpy as np
 from seleniumbase import SB
 
+# Thiết lập đường dẫn và tạo thư mục data nếu chưa có
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "database.db")
+DATA_DIR = os.path.join(BASE_DIR, "data")
+if not os.path.exists(DATA_DIR):
+    os.makedirs(DATA_DIR)
 
-def crawl_fbref_final():
-    url = "https://fbref.com/en/comps/9/2024-2025/stats/2024-2025-Premier-League-Stats"
-    
+DB_PATH = os.path.join(DATA_DIR, "database.db")
+
+def get_html(url):
+    """Lấy HTML từ web"""
     with SB(uc=True, headless=False) as sb:
-        print("[1/4] Đang truy cập FBRef...")
         sb.open(url)
         try:
             sb.wait_for_element("#stats_standard", timeout=20)
-            html_source = sb.get_page_source()
-        except Exception as e:
-            return print(f"Lỗi tải bảng: {e}")
+            html = sb.get_page_source()
+            print("Collected Data")
+            return html
+        except:
+            return None
 
-    print("[2/4] Tối ưu hóa dữ liệu bằng thuật toán...")
-    try:
-        # 1. Đọc và lấy 25 cột đầu tiên
-        df = pd.read_html(io.StringIO(html_source), attrs={'id': 'stats_standard'})[0]
-        final_df = df[df.iloc[:, 1] != 'Player'].iloc[:, :25].copy()
-        raw_cols = df.columns.get_level_values(1)[:25]
+def rename_cols(html):
+    """Đổi tên cột theo vị trí index"""
+    df = pd.read_html(io.StringIO(html), attrs={'id': 'stats_standard'})[0]
+    df = df[df.iloc[:, 1] != 'Player'].iloc[:, :25].copy()
+    raw = df.columns.get_level_values(1)[:25]
 
-        # 2. Thuật toán đặt tên cột tự động (Ngắn gọn)
-        counts = pd.Series(raw_cols).groupby(raw_cols).cumcount()
-        totals = pd.Series(raw_cols).map(pd.Series(raw_cols).value_counts())
-        
-        new_cols = []
-        for name, count, total in zip(raw_cols, counts, totals):
-            if total > 1:
-                suffix = "_performance" if count == 0 else "_per90minutes"
-                new_cols.append(f"{name}{suffix}")
-            else:
-                new_cols.append(name)
-        
-        final_df.columns = new_cols
+    cols = []
+    for i, name in enumerate(raw):
+        if 11 <= i <= 18:
+            cols.append(f"{name}_perf")
+        elif 19 <= i <= 23:
+            cols.append(f"{name}_per90")
+        else:
+            cols.append(name)
+    
+    df.columns = cols
+    print("Renamed Columns")
+    return df
 
-        # 3. Ép kiểu số & Làm sạch (Vectorized)
-        final_df['Age'] = final_df['Age'].str[:2]
-        final_df['Nation'] = final_df['Nation'].str.split().str[-1].fillna("N/a")
+def clean_data(df):
+    """Làm sạch và xử lý dữ liệu"""
+    if 'Age' in df.columns:
+        df['Age'] = df['Age'].str[:2]
+    if 'Nation' in df.columns:
+        df['Nation'] = df['Nation'].str.split().str[-1].fillna("N/a")
 
-        # Chuyển tất cả cột có thể sang số, lọc > 90 phút
-        cols_to_fix = final_df.columns.difference(['Player', 'Nation', 'Pos', 'Squad', 'Matches'])
-        final_df[cols_to_fix] = final_df[cols_to_fix].apply(pd.to_numeric, errors='coerce')
-        final_df = final_df[final_df['Min'] > 90].reset_index(drop=True)
+    exc = ['Player', 'Nation', 'Pos', 'Squad', 'Matches']
+    fix = [c for c in df.columns if c not in exc]
+    
+    df[fix] = df[fix].apply(pd.to_numeric, errors='coerce')
+    
+    if 'Min' in df.columns:
+        df = df[df['Min'] > 90].reset_index(drop=True)
 
-        # 4. Chuyển 0 thành NULL (NaN) trừ cột Rk
-        null_targets = cols_to_fix.difference(['Rk'])
-        final_df[null_targets] = final_df[null_targets].replace({0: np.nan, 0.0: np.nan})
+    nulls = [c for c in fix if c != 'Rk']
+    df[nulls] = df[nulls].replace({0: np.nan, 0.0: np.nan})
+    
+    print("Cleaned Data")
+    return df
 
-        print(f"[3/4] Ghi {len(final_df)} dòng vào database...")
-        with sqlite3.connect(DB_PATH) as conn:
-            final_df.to_sql("statistic", conn, if_exists="replace", index=False)
-        
-        print("HOÀN TẤT!")
+def save_db(df, path):
+    """Lưu vào SQL trong thư mục data"""
+    with sqlite3.connect(path) as conn:
+        df.to_sql("statistic", conn, if_exists="replace", index=False)
+    print("Saved to SQL")
 
-    except Exception as e:
-        print(f"Lỗi: {e}")
+def main():
+    url = "https://fbref.com/en/comps/9/2024-2025/stats/2024-2025-Premier-League-Stats"
+    
+    html = get_html(url)
+    if not html: return
+
+    df = rename_cols(html)
+    df = clean_data(df)
+    save_db(df, DB_PATH)
 
 if __name__ == "__main__":
-    crawl_fbref_final()
+    main()
