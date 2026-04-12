@@ -6,3 +6,6 @@
 # Lookup.py
 Tối giản và tối ưu hóa lại code cho gọn và cho bớt giống AI lại
 Xong báo t t check lại
+
+# Response
+xong xuôi đổi tên file thành response.md rồi ghi rõ phần nào hoàn thiện r phần nào cấn cấn r báo lại t
