@@ -19,6 +19,7 @@ def fetch_player_data(name, club):
     print("Không tìm thấy dữ liệu phù hợp.")
     return None
 
+# In dữ liệu (tóm tắt)
 def display_table(data):
     
     table_data = [
@@ -28,11 +29,12 @@ def display_table(data):
     headers = ["NAME", "CLUB", "NATION", "POS", "AGE"]
     print(tabulate(table_data, headers=headers, tablefmt="grid"))
 
+# lưu dữ liệu vào file CSV (chi tiết)
 def save_to_csv(data, args):
     out_dir = Path(__file__).parent.parent / 'data' / 'lookup_ans'
     out_dir.mkdir(parents=True, exist_ok=True) 
 
-    # Logic đặt tên file dựa trên tham số tìm kiếm
+    # Đặt tên file dựa trên tham số tìm kiếm
     file_parts = [p.replace(' ', '_') for p in [args.name, args.club] if p]
     file_name = f"{'_'.join(file_parts)}.csv"
     file_path = out_dir / file_name
