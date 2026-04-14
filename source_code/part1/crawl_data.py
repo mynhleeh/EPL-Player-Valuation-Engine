@@ -5,81 +5,78 @@ import io
 import numpy as np
 from seleniumbase import SB
 
-# Thiết lập đường dẫn và tạo thư mục data nếu chưa có
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, "data")
-if not os.path.exists(DATA_DIR):
-    os.makedirs(DATA_DIR)
-
-DB_PATH = os.path.join(DATA_DIR, "database.db")
+# Lùi 2 cấp từ source_code/part1/ để vào data/
+DB_PATH = os.path.join(BASE_DIR, "..", "..", "data", "database.db")
 
 def get_html(url):
-    """Lấy HTML từ web"""
-    with SB(uc=True, headless=False) as sb:
+    with SB(uc=True, headless=True) as sb:
         sb.open(url)
         try:
             sb.wait_for_element("#stats_standard", timeout=20)
             html = sb.get_page_source()
-            print("Collected Data")
+            print("Successfully fetched HTML data from the website.")
             return html
-        except:
+        except Exception:
+            print("Failed to fetch data: Element not found or timeout.")
             return None
 
 def rename_cols(html):
-    """Đổi tên cột theo vị trí index"""
     df = pd.read_html(io.StringIO(html), attrs={'id': 'stats_standard'})[0]
-    df = df[df.iloc[:, 1] != 'Player'].iloc[:, :25].copy()
-    raw = df.columns.get_level_values(1)[:25]
+    df = df[df.iloc[:, 1] != 'Player'].copy()
 
-    cols = []
-    for i, name in enumerate(raw):
-        if 11 <= i <= 18:
-            cols.append(f"{name}_perf")
-        elif 19 <= i <= 23:
-            cols.append(f"{name}_per90")
+    new_cols = []
+    for col in df.columns:
+        lvl0 = str(col[0])
+        lvl1 = str(col[1])
+        
+        if "Performance" in lvl0:
+            new_cols.append(f"{lvl1}_perf")
+        elif "Per 90" in lvl0:
+            new_cols.append(f"{lvl1}_per90")
+        elif "Unnamed" in lvl0:
+            new_cols.append(lvl1)
         else:
-            cols.append(name)
-    
-    df.columns = cols
-    print("Renamed Columns")
-    return df
+            new_cols.append(lvl1)
+            
+    df.columns = new_cols
+    return df.iloc[:, :25]
 
 def clean_data(df):
-    """Làm sạch và xử lý dữ liệu"""
+    # Lấy 2 ký tự đầu của Age để có số tuổi thuần túy (ví dụ: 25-150 -> 25)
     if 'Age' in df.columns:
         df['Age'] = df['Age'].str[:2]
-    if 'Nation' in df.columns:
-        df['Nation'] = df['Nation'].str.split().str[-1].fillna("N/a")
 
     exc = ['Player', 'Nation', 'Pos', 'Squad', 'Matches']
     fix = [c for c in df.columns if c not in exc]
     
+    # Ép kiểu dữ liệu số cho các cột chỉ số
     df[fix] = df[fix].apply(pd.to_numeric, errors='coerce')
     
+    # Lọc cầu thủ đá trên 90 phút để dữ liệu có ý nghĩa hơn
     if 'Min' in df.columns:
         df = df[df['Min'] > 90].reset_index(drop=True)
 
-    nulls = [c for c in fix if c != 'Rk']
-    df[nulls] = df[nulls].replace({0: np.nan, 0.0: np.nan})
-    
-    print("Cleaned Data")
     return df
 
-def save_db(df, path):
-    """Lưu vào SQL trong thư mục data"""
-    with sqlite3.connect(path) as conn:
-        df.to_sql("statistic", conn, if_exists="replace", index=False)
-    print("Saved to SQL")
+def save_to_statistic_table(df, path):
+    try:
+        with sqlite3.connect(path) as conn:
+            df.to_sql("statistic", conn, if_exists="replace", index=False)
+        print("Successfully saved data to the database.")
+    except Exception as e:
+        print(f"Error saving to database: {e}")
 
 def main():
     url = "https://fbref.com/en/comps/9/2024-2025/stats/2024-2025-Premier-League-Stats"
     
     html = get_html(url)
-    if not html: return
-
-    df = rename_cols(html)
-    df = clean_data(df)
-    save_db(df, DB_PATH)
+    if html:
+        df = rename_cols(html)
+        df = clean_data(df)
+        save_to_statistic_table(df, DB_PATH)
+    else:
+        print("Crawl failed: No HTML content to process.")
 
 if __name__ == "__main__":
     main()

@@ -2,39 +2,39 @@ import sqlite3
 import pandas as pd
 import time
 import urllib.parse
-import os
+from pathlib import Path
 from seleniumbase import SB
 
-# Lấy đường dẫn thư mục hiện tại của file script
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# Kết hợp với cấu trúc thư mục con để tìm file database.db
-DB_PATH = os.path.join(BASE_DIR, "data", "database.db")
+# 1. Gộp đường dẫn thành 1 dòng duy nhất bằng pathlib
+# Lùi 2 cấp từ file script (part1 -> source_code -> PY_PROJECT) để vào data/database.db
+DB_PATH = Path(__file__).resolve().parents[2] / "data" / "database.db"
 
-# 1. Lấy dữ liệu từ DB
 def get_names(path):
-    # Kiểm tra xem file có tồn tại không trước khi kết nối
-    if not os.path.exists(path):
+    if not path.exists():
         print(f"Error: Database not found at {path}")
         return []
     
-    conn = sqlite3.connect(path)
+    conn = sqlite3.connect(str(path))
     try:
-        df = pd.read_sql("SELECT DISTINCT Player FROM statistic", conn)
-        print("Names loaded")
+        # BỎ DISTINCT để lấy đủ tất cả các dòng (502 dòng) trong bảng statistic
+        df = pd.read_sql("SELECT Player FROM statistic", conn)
+        print(f"Successfully loaded {len(df)} players from database.")
         return df['Player'].tolist()
     finally:
         conn.close()
 
-# 2. Thu thập giá trị từ Web
 def fetch_val(sb, name):
     url = f"https://www.footballtransfers.com/en/search?search_value={urllib.parse.quote(name)}"
     try:
         sb.open(url)
-        sb.sleep(6)
+        # Tối ưu: Đợi phần tử hiện ra thay vì sleep cố định
+        sb.wait_for_element("a.playerList-box", timeout=7)
+        
         boxes = sb.find_elements("a.playerList-box")
         for b in boxes:
             try:
                 title = b.get_attribute("title").strip()
+                # Kiểm tra độ khớp của tên để tránh lấy nhầm người
                 if name.lower() in title.lower() or title.lower() in name.lower():
                     if len(name.split()) == 1 and name.lower() != title.lower():
                         continue
@@ -45,35 +45,49 @@ def fetch_val(sb, name):
     except:
         return "N/a"
 
-# 3. Làm sạch dữ liệu
-def clean_df(data):
-    df = pd.DataFrame(data)
-    df['Transfer_Value'] = df['Transfer_Value'].fillna("N/a")
-    print("Data cleaned")
-    return df
+def update_price_to_db(results, path):
+    """Cập nhật trực tiếp giá trị vào cột Price của bảng players"""
+    try:
+        with sqlite3.connect(str(path)) as conn:
+            cursor = conn.cursor()
+            # Sử dụng executemany để cập nhật hàng loạt, tối ưu tốc độ ghi đĩa
+            cursor.executemany("""
+                UPDATE players 
+                SET Price = ? 
+                WHERE Player = ?
+            """, [(r['Transfer_Value'], r['Player']) for r in results])
+            conn.commit()
+        print(f"--- Updated {len(results)} records in 'players' table ---")
+    except Exception as e:
+        print(f"Error updating database: {e}")
 
-# 4. Lưu vào SQL
-def save_db(df, path):
-    with sqlite3.connect(path) as conn:
-        df.to_sql("transfer_values", conn, if_exists="replace", index=False)
-    print("Exported to SQL")
-
-# 5. Điều phối chính
-def main_test():
-    names = get_names(DB_PATH)
-    if not names: return # Dừng nếu không tìm thấy database hoặc không có tên
+def main():
+    print(f"Targeting Database at: {DB_PATH}")
+    all_names = get_names(DB_PATH)
+    if not all_names: return 
     
     results = []
-    with SB(uc=True, headless=False) as sb:
-        for n in names:
+    
+    # Chạy ngầm (headless=True) để MacBook không bị nóng và tốn RAM
+    with SB(uc=True, headless=True) as sb:
+        for i, n in enumerate(all_names):
             val = fetch_val(sb, n)
-            print(f"{n}: {val}") 
             results.append({"Player": n, "Transfer_Value": val})
-            time.sleep(1.5)
-    print("Collected Data")
+            
+            # In tiến độ thực tế (ví dụ: [100/502])
+            print(f"[{i+1}/{len(all_names)}] {n}: {val}")
+            
+            # Cứ mỗi 50 người thì lưu vào DB một lần để tránh mất dữ liệu nếu gặp sự cố
+            if (i + 1) % 50 == 0:
+                update_price_to_db(results, DB_PATH)
+                results = [] # Reset danh sách tạm
+                time.sleep(3) # Nghỉ ngắn để tránh bị website chặn IP
+            
+            time.sleep(0.3) # Nghỉ nhẹ giữa mỗi lần crawl
 
-    final_df = clean_df(results)
-    save_db(final_df, DB_PATH)
+    # Lưu nốt những cầu thủ còn lại sau vòng lặp
+    if results:
+        update_price_to_db(results, DB_PATH)
 
 if __name__ == "__main__":
-    main_test()
+    main()
