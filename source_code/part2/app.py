@@ -5,53 +5,45 @@ from pathlib import Path
 app = Flask(__name__)
 
 
-def get_db_connection():
+def get_db_path():
     current_dir = Path(__file__).parent
-    db_path = current_dir.parent.parent / 'data' / 'database.db'
-    
-    conn = sqlite3.connect(db_path)
-    
-    # Giúp kết quả trả về có chứa tên cột
-    conn.row_factory = sqlite3.Row 
-    return conn
+    return current_dir.parent.parent / 'data' / 'database.db'
 
-@app.route('/api/players', methods=['GET'])
+@app.route('/api/search', methods=['GET'])
 def search_player_stats():
-    # 1. Lấy tham số tìm kiếm từ đường dẫn
+    # Lấy tham số tìm kiếm từ đường dẫn
     name = request.args.get('name')
     club = request.args.get('club')
     
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # 2. Viết câu lệnh truy vấn vào bảng 'statistic'
+    if not name and not club:
+        return jsonify({"error": "Vui lòng cung cấp ít nhất 'name' hoặc 'club'."}), 400
+
+    # Truy vấn vào bảng 'statistic'
     query = "SELECT * FROM statistic WHERE 1=1"
     params = []
     
-    # Nếu có tìm theo tên, so sánh với cột 'Player'
+    # Tìm theo tên
     if name:
         query += " AND Player LIKE ?"
         params.append(f"%{name}%")
         
-    # Nếu có tìm theo câu lạc bộ, so sánh với cột 'Squad'
+    # Tìm theo câu lạc bộ
     if club:
         query += " AND Squad LIKE ?"
         params.append(f"%{club}%")
         
-    # 3. Thực thi và lấy dữ liệu
-    cursor.execute(query, params)
-    rows = cursor.fetchall()
-    conn.close()
+    db_path = get_db_path()
+
+    with sqlite3.connect(db_path) as conn:
+        conn.row_factory = sqlite3.Row 
+        cursor = conn.cursor()
+        cursor.execute(query, params)
+        results = [dict(row) for row in cursor.fetchall()]
     
-    # 4. Chuyển đổi dữ liệu thành dạng danh sách từ điển (list of dicts) để tạo JSON chuẩn
-    results = [dict(row) for row in rows]
-    
-    # Trả về kết quả
     if not results:
-        return jsonify({"message": "Không tìm thấy cầu thủ nào phù hợp."}), 404
+        return jsonify({"message": "Không tìm thấy dữ liệu phù hợp."}), 404
         
     return jsonify(results)
 
 if __name__ == '__main__':
-    # Bật debug=True để tự động cập nhật khi bạn sửa code
     app.run(port=5000, debug=True)
