@@ -63,7 +63,7 @@ def save_to_statistic_table(df, path):
     try:
         with sqlite3.connect(path) as conn:
             df.to_sql("statistic", conn, if_exists="replace", index=False)
-        print("Successfully saved data to the database.")
+            print("Successfully saved data to the database.")
     except Exception as e:
         print(f"Error saving to database: {e}")
 
