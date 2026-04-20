@@ -1,6 +1,6 @@
 # App.py
 1. Chưa có phần ngắt kết nối database, cần bổ sung thêm
-> Chưa hiểu phần ngắt kết nối lắm (cần cấu lệnh cụ thể hãy là tự động ngắt kết nối? )
+> đã thêm app.teardown_appcontext để tự động đóng kết nối sau mỗi request
 
 2. Xử lý trường hợp request không có cả name và club. Code của m đang trả về toàn bộ database, cần sửa - 
 > trả về lỗi yêu cầu cung cấp ít nhất 1 trong 2 tham số
