@@ -1,61 +1,51 @@
-import requests
-import argparse
-import csv
+import requests, argparse, csv
 from tabulate import tabulate
 from pathlib import Path
 
 API_URL = "http://127.0.0.1:5000/api/search"
 
+# Fetch player databbased on name / club
 def fetch_player_data(name, club):
-    params = {}
-    if name: params['name'] = name
-    if club: params['club'] = club
-
+    params = {k: v for k, v in [('name', name), ('club', club)] if v}
     response = requests.get(API_URL, params=params)
-
+    
     if response.ok:
         return response.json()
     
-    print("Không tìm thấy dữ liệu phù hợp.")
+    print("No matching data found.")
     return None
 
-# In dữ liệu (tóm tắt)
+# Display results (summary)
 def display_table(data):
-    
-    table_data = [
-        [row.get('Player'), row.get('Squad'), row.get('Nation'), row.get('Pos'), row.get('Age')]
-        for row in data
-    ]
-    headers = ["NAME", "CLUB", "NATION", "POS", "AGE"]
-    print(tabulate(table_data, headers=headers, tablefmt="grid"))
+    table_data = [[r.get('Player'), r.get('Squad'), r.get('Nation'), r.get('Pos'), r.get('Age')] for r in data]
+    print(tabulate(table_data, headers=["NAME", "CLUB", "NATION", "POS", "AGE"], tablefmt="grid"))
 
-# lưu dữ liệu vào file CSV (chi tiết)
+# Save to CSV (detailed)
 def save_to_csv(data, args):
-    out_dir = Path(__file__).parent.parent / 'data' / 'lookup_ans'
-    out_dir.mkdir(parents=True, exist_ok=True) 
 
-    # Đặt tên file dựa trên tham số tìm kiếm
-    file_parts = [p.replace(' ', '_') for p in [args.name, args.club] if p]
-    file_name = f"{'_'.join(file_parts)}.csv"
+    out_dir = Path(__file__).resolve().parents[2] / 'data' / 'lookup_ans'
+    # out_dir.mkdir(parents=True, exist_ok=True) 
+
+    # Create filename
+    file_name = "_".join(p.replace(' ', '_') for p in [args.name, args.club] if p) + ".csv"
     file_path = out_dir / file_name
-        
-    with open(file_path, mode='w', newline='', encoding='utf-8-sig') as f:
+    
+    # Save data to CSV
+    with open(file_path, 'w', newline='', encoding='utf-8-sig') as f:
         writer = csv.DictWriter(f, fieldnames=data[0].keys())
         writer.writeheader() 
         writer.writerows(data) 
         
-    print(f"\n Đã lưu toàn bộ chỉ số chi tiết vào file: {file_path}")
+    print(f"\nSaved detailed stats to: {file_path}")
 
 def main():
-    parser = argparse.ArgumentParser(description="Công cụ tra cứu cầu thủ bóng đá")
-    parser.add_argument("--name", help="Tên cầu thủ cần tra cứu")
-    parser.add_argument("--club", help="Tên câu lạc bộ cần tra cứu")
+    parser = argparse.ArgumentParser(description="Player lookup tool")
+    parser.add_argument("--name", help="Player name")
+    parser.add_argument("--club", help="Club name")
     args = parser.parse_args()
 
     if not args.name and not args.club:
-        parser.error("Vui lòng nhập --name hoặc --club để tra cứu.")
-
-    print("Đang tìm kiếm thông tin ...")
+        parser.error("Please provide --name or --club.")
     
     if data := fetch_player_data(args.name, args.club):
         display_table(data)
