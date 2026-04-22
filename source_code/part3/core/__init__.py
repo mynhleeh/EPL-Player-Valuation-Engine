@@ -1,1 +1,1 @@
-# core — internal modules for the evaluation pipeline.
+# Core components for analytics pipeline

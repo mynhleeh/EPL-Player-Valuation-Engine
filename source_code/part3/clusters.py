@@ -13,7 +13,7 @@ raw_path = base_dir / "data"
 charts_path = base_dir / "data" / "charts"
 
 
-def fetch_data():
+def load_stats():
     with sqlite3.connect(str(raw_path / "database.db")) as conn:
         df = pd.read_sql("SELECT * FROM statistic", conn)
 
@@ -29,7 +29,7 @@ def fetch_data():
         return df
 
 
-def create_charts(elbow: list, silhouettes: list, max_k=10):
+def plot_metrics(elbow: list, silhouettes: list, max_k=10):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
     
     ax1.plot(range(2, max_k + 1), elbow, marker='o', color='b')
@@ -40,10 +40,9 @@ def create_charts(elbow: list, silhouettes: list, max_k=10):
 
     plt.tight_layout()
     plt.savefig(str(charts_path / "elbow_silhouettes.png"), dpi=900, bbox_inches='tight', facecolor='white')
-    # plt.show()
 
 
-def tryKclutters(data: pd.DataFrame, max_k=10):
+def test_clusters(data: pd.DataFrame, max_k=10):
     elbow, silhouettes = [], []
 
     for k in range(2, max_k + 1):
@@ -53,10 +52,10 @@ def tryKclutters(data: pd.DataFrame, max_k=10):
         elbow.append(kmeans.inertia_)
         silhouettes.append(silhouette_score(data, kmeans.labels_))
 
-    create_charts(elbow, silhouettes, max_k)
+    plot_metrics(elbow, silhouettes, max_k)
 
 
-def reshape(df: pd.DataFrame, dimen: int):
+def reduce_dim(df: pd.DataFrame, dimen: int):
     new_arr = PCA(n_components=dimen).fit_transform(df)
 
     cols = ['X', 'Y']
@@ -65,8 +64,8 @@ def reshape(df: pd.DataFrame, dimen: int):
     return pd.DataFrame(data=new_arr, columns=cols)
 
 
-def scatter_chart(df: pd.DataFrame, kmeans: KMeans, dimen: int):
-    df = reshape(df, dimen)
+def plot_clusters(df: pd.DataFrame, kmeans: KMeans, dimen: int):
+    df = reduce_dim(df, dimen)
     fig = plt.figure(figsize=(10, 8))
 
     if dimen == 2:
@@ -82,16 +81,15 @@ def scatter_chart(df: pd.DataFrame, kmeans: KMeans, dimen: int):
     plt.title(f"K-Means Clustering {dimen}D Visualization")
 
     plt.savefig(str(charts_path / f"kmeans_{dimen}d.png"), dpi=900, bbox_inches='tight', facecolor='white')
-    # plt.show()
 
 
 if __name__ == '__main__':
-    raw_data = fetch_data()
+    raw_data = load_stats()
     scaled_data = pd.DataFrame(RobustScaler().fit_transform(raw_data))
-    tryKclutters(scaled_data)
+    test_clusters(scaled_data)
 
     bestK = int(input('Enter best K for K-Means Algorithm: '))
     kmeans = KMeans(n_clusters=bestK, init='k-means++', n_init=10).fit(scaled_data)
 
-    scatter_chart(scaled_data, kmeans, 2)
-    scatter_chart(scaled_data, kmeans, 3)
+    plot_clusters(scaled_data, kmeans, 2)
+    plot_clusters(scaled_data, kmeans, 3)

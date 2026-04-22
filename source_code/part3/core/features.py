@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 
-def processing(df: pd.DataFrame) -> pd.DataFrame:
+def prepare_features(df: pd.DataFrame) -> pd.DataFrame:
     # Set-up main features
     cols = ['Player', 'Squad', 'Nation', 'transfer', 'Age', 'Min', 'Gls_perf', 'Ast_perf',
             'PK_perf', 'CrdY_perf', 'CrdR_perf']

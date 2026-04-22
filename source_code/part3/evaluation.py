@@ -6,13 +6,13 @@ import pandas as pd
 import numpy as np
 
 from core.config import OUTPUTS_PATH, TEST_SIZE, RANDOM_STATE, BASE_XGB_PARAMS
-from core.data_loader import load_and_merge
-from core.feature_engineering import processing
+from core.loader import get_merged_data
+from core.features import prepare_features
 from core.training import train_model
-from core.visualization import compare_act_pred, feature_importance, residual_analysis
+from core.charts import plot_comparison, plot_importance, plot_residuals
 
 
-def global_metrics(y_test: np.ndarray, y_pred: np.ndarray) -> list[float]:
+def get_metrics(y_test: np.ndarray, y_pred: np.ndarray) -> list[float]:
     y_test = np.expm1(y_test)
     y_pred = np.expm1(y_pred)
 
@@ -23,14 +23,14 @@ def global_metrics(y_test: np.ndarray, y_pred: np.ndarray) -> list[float]:
     return [rmse, mae, r2]
 
 
-def final(best_params: dict, x_train, y_train, x_test, y_test, player_test) -> None:
+def run_evaluation(best_params: dict, x_train, y_train, x_test, y_test, player_test) -> None:
     cmp_dummy_xgb = pd.DataFrame({'Metrics': ['rmse', 'mae', 'r2']})
 
     # Dummy Regressor
     dummy = DummyRegressor(strategy="mean")
     dummy.fit(x_train, y_train)
     dummy_y_pred = dummy.predict(x_test)
-    cmp_dummy_xgb["Dummy Regressor"] = global_metrics(y_test, dummy_y_pred)
+    cmp_dummy_xgb["Dummy Regressor"] = get_metrics(y_test, dummy_y_pred)
 
     # XGB Regressor
     final_params = {**BASE_XGB_PARAMS, **best_params}
@@ -40,7 +40,7 @@ def final(best_params: dict, x_train, y_train, x_test, y_test, player_test) -> N
     y_pred = final_model.predict(x_test)
 
     # Export Compare dummy vs xgb Regressor
-    cmp_dummy_xgb['XGB Regressor'] = global_metrics(y_test, y_pred)
+    cmp_dummy_xgb['XGB Regressor'] = get_metrics(y_test, y_pred)
     cmp_dummy_xgb.to_excel(str(OUTPUTS_PATH / "compare_dummy_xgb.xlsx"), index=False)
 
     # Export Test
@@ -61,16 +61,16 @@ def final(best_params: dict, x_train, y_train, x_test, y_test, player_test) -> N
 
     test_stat['Abs_Error'] = test_stat['Residual_Error'].abs()
     test_stat = test_stat.sort_values(by='Abs_Error', ascending=False).drop(columns=['Abs_Error'])
-    test_stat.to_excel(str(OUTPUTS_PATH / "test.xlsx"), index=False)
+    test_stat.to_excel(str(OUTPUTS_PATH / "player_valuation_results.xlsx"), index=False)
 
     # Charts
-    compare_act_pred(y_test, y_pred)
-    feature_importance(final_model.feature_importances_, x_test.columns)
-    residual_analysis(y_test, y_pred)
+    plot_comparison(y_test, y_pred)
+    plot_importance(final_model.feature_importances_, x_test.columns)
+    plot_residuals(y_test, y_pred)
 
 
 if __name__ == '__main__':
-    df = processing(load_and_merge())
+    df = prepare_features(get_merged_data())
     player = df['Player']
 
     y = np.log1p(df['transfer'])
@@ -83,4 +83,4 @@ if __name__ == '__main__':
     name, db_url = "params", f"sqlite:///{OUTPUTS_PATH}/params_trial.db"
     study = train_model(name, db_url, x_train, y_train)
 
-    final(study.best_params, x_train, y_train, x_test, y_test, player_test)
+    run_evaluation(study.best_params, x_train, y_train, x_test, y_test, player_test)
