@@ -9,11 +9,12 @@ import pandas as pd
 import sqlite3
 
 base_dir = Path(__file__).resolve().parent.parent.parent
-path = base_dir / "data"
+raw_path = base_dir / "data"
+charts_path = base_dir / "data" / "charts"
 
 
 def fetch_data():
-    with sqlite3.connect(str(path / "database.db")) as conn:
+    with sqlite3.connect(str(raw_path / "database.db")) as conn:
         df = pd.read_sql("SELECT * FROM statistic", conn)
 
         # remove GK
@@ -38,7 +39,7 @@ def create_charts(elbow: list, silhouettes: list, max_k=10):
     ax2.set_title('Silhouettes chart')
 
     plt.tight_layout()
-    plt.savefig(str(path / "Elbow and Silhouettes chart"), dpi=900, bbox_inches='tight', facecolor='white')
+    plt.savefig(str(charts_path / "elbow_silhouettes.png"), dpi=900, bbox_inches='tight', facecolor='white')
     # plt.show()
 
 
@@ -80,7 +81,7 @@ def scatter_chart(df: pd.DataFrame, kmeans: KMeans, dimen: int):
     plt.colorbar(scatter, ax=ax, label='Cluster')
     plt.title(f"K-Means Clustering {dimen}D Visualization")
 
-    plt.savefig(str(path / f"K-Means {dimen}D.png"), dpi=900, bbox_inches='tight', facecolor='white')
+    plt.savefig(str(charts_path / f"kmeans_{dimen}d.png"), dpi=900, bbox_inches='tight', facecolor='white')
     # plt.show()
 
 
