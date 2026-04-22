@@ -7,7 +7,7 @@ import optuna
 
 from .config import (
     BASE_XGB_PARAMS, N_SPLITS, N_REPEATS, RANDOM_STATE,
-    EARLY_STOPPING_ROUNDS, STRATIFY_BINS,
+    EARLY_STOPPING_ROUNDS, STRATIFY_BINS, N_TRIALS
 )
 
 
@@ -64,7 +64,7 @@ def train_model(name: str, db_url: str, x_train: pd.DataFrame, y_train: pd.Serie
     print("Training Status: Starting Optuna optimization...")
     study.optimize(
         lambda trial: objective(trial, x_train, y_train),
-        n_trials=1,
+        n_trials=N_TRIALS,
         gc_after_trial=True,
         show_progress_bar=True
     )
