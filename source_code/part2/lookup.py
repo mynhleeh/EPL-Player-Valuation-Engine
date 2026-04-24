@@ -4,6 +4,7 @@ from pathlib import Path
 
 API_URL = "http://127.0.0.1:5000/api/search"
 
+
 # Fetch player databbased on name / club
 def fetch_player_data(name, club):
     params = {k: v for k, v in [('name', name), ('club', club)] if v}
@@ -15,20 +16,24 @@ def fetch_player_data(name, club):
     print("No matching data found.")
     return None
 
+
 # Display results (summary)
 def display_table(data):
+    print(" Summary of results: ")
+
     table_data = [[r.get('Player'), r.get('Squad'), r.get('Nation'), r.get('Pos'), r.get('Age')] for r in data]
-    print(tabulate(table_data, headers=["NAME", "CLUB", "NATION", "POS", "AGE"], tablefmt="grid"))
+    table_view = tabulate(table_data, headers=["NAME", "CLUB", "NATION", "POS", "AGE"], tablefmt="grid")
+    
+    print(table_view)
+
 
 # Save to CSV (detailed)
 def save_to_csv(data, args):
-
-    out_dir = Path(__file__).resolve().parents[2] / 'data' / 'lookup_ans'
-    # out_dir.mkdir(parents=True, exist_ok=True) 
+    path = Path(__file__).resolve().parents[2] / 'data' / 'lookup_ans'
 
     # Create filename
     file_name = "_".join(p.replace(' ', '_') for p in [args.name, args.club] if p) + ".csv"
-    file_path = out_dir / file_name
+    file_path = path / file_name
     
     # Save data to CSV
     with open(file_path, 'w', newline='', encoding='utf-8-sig') as f:
@@ -36,9 +41,10 @@ def save_to_csv(data, args):
         writer.writeheader() 
         writer.writerows(data) 
         
-    print(f"\nSaved detailed stats to: {file_path}")
+    print("Saved detailed stat")
 
-def main():
+
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Player lookup tool")
     parser.add_argument("--name", help="Player name")
     parser.add_argument("--club", help="Club name")
@@ -50,6 +56,3 @@ def main():
     if data := fetch_player_data(args.name, args.club):
         display_table(data)
         save_to_csv(data, args)
-
-if __name__ == "__main__":
-    main()

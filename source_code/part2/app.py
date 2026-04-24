@@ -3,11 +3,13 @@ import sqlite3
 from pathlib import Path
 
 app = Flask(__name__)
+app.json.sort_keys = False 
+
 
 def get_db_path():
-    # Resolve absolute path for safety
     current_dir = Path(__file__).resolve().parent
     return current_dir.parent.parent / 'data' / 'database.db'
+
 
 def get_db():
     # Manage DB connection per request
@@ -17,12 +19,14 @@ def get_db():
         db.row_factory = sqlite3.Row
     return db
 
+
 @app.teardown_appcontext
 def close_connection(exception):
     # Auto-close DB connection after request
     db = getattr(g, '_database', None)
     if db is not None:
         db.close()
+
 
 @app.route('/api/search', methods=['GET'])
 def search_player_stats():
