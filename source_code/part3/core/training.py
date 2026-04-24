@@ -6,7 +6,7 @@ import numpy as np
 import optuna
 
 from .config import (
-    BASE_XGB_PARAMS, N_SPLITS, N_REPEATS, N_TRIALS
+    BASE_XGB_PARAMS, N_SPLITS, N_REPEATS, N_TRIALS,
     RANDOM_STATE, EARLY_STOPPING_ROUNDS, STRATIFY_BINS,
 )
 
