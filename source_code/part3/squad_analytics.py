@@ -3,10 +3,9 @@ import pandas as pd
 import sqlite3
 
 
-base_dir = Path(__file__).resolve().parent.parent.parent
-path = base_dir / "data"
+path = Path(__file__).resolve().parent.parent.parent / "data"
 
-def calculate_stat():
+def calculate_stats():
     with sqlite3.connect(str(path / "database.db")) as conn:
         df = pd.read_sql("SELECT * FROM statistic", conn)
 
@@ -21,7 +20,7 @@ def calculate_stat():
         return table
 
 
-def find_stat(df: pd.DataFrame):
+def get_max_stats(df: pd.DataFrame):
     table = pd.DataFrame()
 
     table['Stat'] = [c for c in df.columns]
@@ -32,7 +31,7 @@ def find_stat(df: pd.DataFrame):
     return table
 
 
-def squads_ranking(data: pd.DataFrame):
+def rank_squads(data: pd.DataFrame):
     ref = pd.DataFrame()
 
     ref['stat'] = ['G+A_per90_mean', 'G-PK_per90_mean', 'G+A_perf_median',
@@ -58,14 +57,14 @@ def squads_ranking(data: pd.DataFrame):
 
 
 if __name__ == '__main__':
-    new_stat = calculate_stat()
-    new_stat.to_csv(str(path / "analysis.csv"), index=False)
+    new_stat = calculate_stats()
+    new_stat.to_csv(str(path / "squad_stats_summary.csv"), index=False)
     print("Exported csv successfully")
 
-    max_stat = find_stat(new_stat)
-    print("Đội bóng có các chỉ số cao nhất:")
+    max_stat = get_max_stats(new_stat)
+    print("Teams with highest statistics:")
     print(max_stat)
 
-    rank = squads_ranking(new_stat)
-    print("Dựa trên mô hình đánh giá tổng hợp đa biến (Tấn công, kỹ thuật, tính ổn định,...)")
-    print(f"Đội bóng có phong độ ấn tượng nhất giải đấu là {rank['Squad'][0]}")
+    rank = rank_squads(new_stat)
+    print("Based on multivariate evaluation model (Offense, technique, stability,...)")
+    print(f"The most impressive team in the league is {rank['Squad'][0]}")

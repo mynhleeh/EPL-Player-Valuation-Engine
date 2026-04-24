@@ -1,149 +1,86 @@
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.model_selection import RepeatedKFold, StratifiedKFold, RepeatedStratifiedKFold
-from sklearn.metrics import r2_score
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.dummy import DummyRegressor
 from xgboost import XGBRegressor
-from pathlib import Path
 import pandas as pd
 import numpy as np
-import sqlite3
-import optuna
 
-path = Path(__file__).resolve().parent.parent.parent / "data"
-
-def fetch_database():
-    with sqlite3.connect(str(path / "database.db")) as conn:
-        query = """
-        SELECT stat.*, p.price as transfer
-        FROM statistic as stat
-        LEFT JOIN price p
-        ON stat.Player = p.Player
-        """
-        df = pd.read_sql(query, conn)
-
-        print("Fetched Database Successfully")
-        return df
+from core.config import OUTPUTS_PATH, TEST_SIZE, RANDOM_STATE, BASE_XGB_PARAMS
+from core.loader import get_merged_data
+from core.features import prepare_features
+from core.training import train_model
+from core.charts import plot_comparison, plot_importance, plot_residuals
 
 
-def processing(df: pd.DataFrame):
-    # Set-up main features
-    cols = ['Squad', 'Nation', 'transfer', 'Age', 'Min', 'Gls_perf', 'Ast_perf',
-            'PK_perf', 'CrdY_perf', 'CrdR_perf']
+def get_metrics(y_test: np.ndarray, y_pred: np.ndarray) -> list[float]:
+    y_test = np.expm1(y_test)
+    y_pred = np.expm1(y_pred)
+
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+    mae = mean_absolute_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+
+    return [rmse, mae, r2]
+
+
+def run_evaluation(best_params: dict, x_train, y_train, x_test, y_test, player_test) -> None:
+    cmp_dummy_xgb = pd.DataFrame({'Metrics': ['rmse', 'mae', 'r2']})
+
+    # Dummy Regressor
+    dummy = DummyRegressor(strategy="mean")
+    dummy.fit(x_train, y_train)
+    dummy_y_pred = dummy.predict(x_test)
+    cmp_dummy_xgb["Dummy Regressor"] = get_metrics(y_test, dummy_y_pred)
+
+    # XGB Regressor
+    final_params = {**BASE_XGB_PARAMS, **best_params}
     
-    # Set Category
-    df['Nation'] = df['Nation'].astype('category')
-    df['Squad'] = df['Squad'].astype('category')
-    
-    # Transfer process
-    price = df['transfer'].replace("N/A", np.nan)
-    price = price.str.replace('[€M]', '', regex=True)
-    price = pd.to_numeric(price, errors='coerce')
-    df['transfer'] = price
+    final_model = XGBRegressor(**final_params)
+    final_model.fit(x_train, y_train)
+    y_pred = final_model.predict(x_test)
 
-    # One-Hot Encoding
-    dummies = df['Pos'].str.get_dummies(sep=',')
-    df = pd.concat([dummies, df], axis=1)
-    cols += [c for c in dummies.columns]
-    
-    # New features only db
-    df['Squad_Status'] = np.where(df['MP'] != 0, df['Starts'] / df['MP'], 0)
-    df['Stamina_Trust'] = np.where(df['MP'] != 0, df['Min'] / df['MP'], 0)
-    df['NPG_Efficiency'] = np.where(df['Min'] != 0, (df['Gls_perf'] - df['PK_perf']) / df['Min'], 0)
-    df['Discipline_Risk'] = np.where(df['Min'] != 0, (df['CrdY_perf'] + 2 * df['CrdR_perf']) / df['Min'], 0)
-    df['Assist_Efficiency'] = df['Ast_perf'] / df['Min']
+    # Export Compare dummy vs xgb Regressor
+    cmp_dummy_xgb['XGB Regressor'] = get_metrics(y_test, y_pred)
+    cmp_dummy_xgb.to_excel(str(OUTPUTS_PATH / "compare_dummy_xgb.xlsx"), index=False)
 
-    cols += ['Squad_Status', 'Stamina_Trust', 'NPG_Efficiency', 'Discipline_Risk', 'Assist_Efficiency']
-    
-    # New features include analysis.csv
-    df['Min_Z_Score'] = np.where(df['Min_std'] != 0, (df['Min'] - df['Min_mean']) / df['Min_std'] , 0)
-    df['Age_Diff_Squad'] = df['Age'] - df['Age_mean']
-    df['Offensive_Share_Proxy'] = (df['Gls_perf'] + df['Ast_perf']) / (df['G+A_perf_mean'] + 1e-5)
-    df['Squad_Age_Profile'] = df['Age_mean']
-    df['Squad_Rotation_Index'] = df['Min_std']
-    df['Squad_Discipline'] = df['CrdY_perf_mean'] + df['CrdR_perf_mean']
+    # Export Test
+    actual_prices = np.expm1(y_test)
+    predicted_prices = np.expm1(y_pred)
 
-    cols += ['Min_Z_Score', 'Age_Diff_Squad', 'Offensive_Share_Proxy', 'Squad_Age_Profile',
-             'Squad_Rotation_Index', 'Squad_Discipline']
+    test_stat = pd.DataFrame({
+        'Player': player_test,
+        'Actual_Transfer_Value_M': actual_prices,
+        'Predicted_Value_M': predicted_prices,
+        'Residual_Error': actual_prices - predicted_prices,
+        'Valuation_Status': np.select(
+            [predicted_prices > actual_prices, predicted_prices < actual_prices],
+            ['Undervalued', 'Overvalued'],
+            default='Fair Valued'
+        )
+    })
 
-    df = df.loc[:, cols]
-    df.dropna(subset='transfer', inplace=True, ignore_index=True)
+    test_stat['Abs_Error'] = test_stat['Residual_Error'].abs()
+    test_stat = test_stat.sort_values(by='Abs_Error', ascending=False).drop(columns=['Abs_Error'])
+    test_stat.to_excel(str(OUTPUTS_PATH / "player_valuation_results.xlsx"), index=False)
 
-    print("Processed Data Succesfully")
-    return df
+    # Charts
+    plot_comparison(y_test, y_pred)
+    plot_importance(final_model.feature_importances_, x_test.columns)
+    plot_residuals(y_test, y_pred)
 
-
-def objective(trial, x, y):
-    param = {
-        'enable_categorical': True,
-        'n_jobs': -1,
-        'learning_rate': trial.suggest_float('learning_rate', 0.001, 1.0),
-        'min_split_loss': trial.suggest_float('min_split_loss', 0, 10000),
-        'alpha': trial.suggest_float('alpha', 1e-8, 1.0),
-        'lambda': trial.suggest_float('lambda', 1e-8, 1.0),
-        'max_depth': trial.suggest_int('max_depth', 3, 7),
-        'subsample': trial.suggest_float('subsample', 0.5, 1.0),
-    }
-
-    cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=3, random_state=42)
-    y_binned = pd.qcut(y, q=10, labels=False, duplicates='drop')
-
-    model = XGBRegressor(**param)
-    score = []
-
-    for train, val in cv.split(x, y_binned):
-        x_train, x_val = x.iloc[train], x.iloc[val]
-        y_train, y_val = y.iloc[train], y.iloc[val]
-
-        model.fit(x_train, y_train, eval_set=[(x_val, y_val)], verbose=False)
-        scr = r2_score(y_val, model.predict(x_val))
-
-        score.append(scr)
-    return np.mean(score)
-
-
-def try_params(x: pd.DataFrame, y: pd.DataFrame, name: str, url: str):
-    func = lambda trial: objective(trial, x, y)
-
-    study = optuna.create_study(
-        study_name=name,
-        storage=url,
-        load_if_exists=True,
-        sampler=optuna.samplers.CmaEsSampler(),
-        direction='maximize'
-    )
-    study.optimize(func, n_trials=10000, gc_after_trial=True, show_progress_bar=True)
-
-
-def train_best_params(x, y, name: str, url: str):
-    param = {
-        'enable_categorical': True,
-        'n_jobs': -1,
-    }
-
-    best_param = optuna.load_study(study_name=name, storage=url).best_params
-    for k, v in best_param.items():
-        if k not in param: param[k] = v
-
-    model = XGBRegressor(**param)
-    # model.fit(x_train, y_train)
-
-    # score = model.score(x_test, y_test)
-    # print(score)
-
-
-def train_model(df: pd.DataFrame):
-    name, db_url = "params", f"sqlite:///{path}/params_trial.db"
-
-    y = np.log1p(df['transfer'])
-    x = df.drop(columns='transfer')
-    
-    try_params(x, y, name, db_url)
-    # train_best_params(x, y, name, db_url)
 
 if __name__ == '__main__':
-    db = fetch_database()
-    analysis = pd.read_csv(str(path / "analysis.csv"))
+    df = prepare_features(get_merged_data())
+    player = df['Player']
 
-    merged = pd.merge(left=db, right=analysis, on='Squad', how='left')
-    df = processing(merged)
+    y = np.log1p(df['transfer'])
+    x = df.drop(columns=['transfer', 'Player'])
 
-    train_model(df)
+    x_train, x_test, y_train, y_test, player_train, player_test = train_test_split(
+        x, y, player, test_size=TEST_SIZE, random_state=RANDOM_STATE
+    )
+
+    name, db_url = "params", f"sqlite:///{OUTPUTS_PATH}/params_trial.db"
+    study = train_model(name, db_url, x_train, y_train)
+
+    run_evaluation(study.best_params, x_train, y_train, x_test, y_test, player_test)
