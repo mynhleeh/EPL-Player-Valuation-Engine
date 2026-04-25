@@ -4,8 +4,9 @@ __pycache__/
 .vscode/
 
 # Latex
-.aux
-.fdb_latexmk
-.fls
-.log
-.gz 
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.gz
+*.synctex.gz
