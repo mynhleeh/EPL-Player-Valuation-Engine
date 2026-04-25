@@ -24,10 +24,12 @@ def fetch_val(sb, name):
     url = f"https://www.footballtransfers.com/en/search?search_value={urllib.parse.quote(name)}"
     sb.open(url)
     
-    if not sb.is_element_present("a.playerList-box"):
+    try:
+        # Chờ tối đa 8 giây để trang kịp hiển thị (Thay vì check is_element_present ngay lập tức làm hỏng logic)
+        sb.wait_for_element("a.playerList-box", timeout=8)
+    except Exception:
         return "N/a"
 
-    sb.wait_for_element("a.playerList-box", timeout=20)
     boxes = sb.find_elements("a.playerList-box")
 
     best_title = None
@@ -44,47 +46,39 @@ def fetch_val(sb, name):
             highest_score = score
             best_title = title.strip()
     
-    # Khớp trên 80%, dùng XPath để lấy giá trị chuyển nhượng 
+    # Khớp trên 80%
     if best_title and highest_score > 80:
 
-        # XPath này tìm thẻ 'a' có title tương ứng, sau đó lấy thẻ span con của nó
-        xpath = f"//a[@title='{best_title}']//span[@class='player-tag']"
-        if sb.is_element_present(xpath):
-            return sb.get_text(xpath).strip()
+        # Sử dụng CSS Selector để tránh lỗi cấu trúc với dấu nháy đơn trong tên (vd: O'Shea)
+        safe_title = best_title.replace('"', '\\"')
+        css_selector = f'a[title="{safe_title}"] span.player-tag'
+        
+        if sb.is_element_present(css_selector):
+            return sb.get_text(css_selector).strip()
     
     return "N/a"
 
 # Lưu dữ liệu từ DataFrame vào bảng price trong database
-def store_database(price: pd.DataFrame):
+def store_database(price: pd.DataFrame, if_exists="replace"):
     with sqlite3.connect(str(DB_PATH)) as conn:
-        price.to_sql("price", conn, if_exists="replace", index=False)
+        price.to_sql("price", conn, if_exists=if_exists, index=False)
 
 
 if __name__ == "__main__":
     all_names = get_names(DB_PATH)
-    results = []
-    
-    # Cấu hình chia đợt
-    CHUNK_SIZE = 50
 
     with SB(uc=True, headless=True) as sb:
-        # Duyệt danh sách theo từng đợt 50 cầu thủ
-        for i in range(0, len(all_names), CHUNK_SIZE):
-            chunk = all_names[i : i + CHUNK_SIZE]
+        # Duyệt trực tiếp 1-1, bỏ qua thời gian nghỉ do web không check bot
+        for index, n in enumerate(all_names):
+            val = fetch_val(sb, n)
+            print(f"{index}. {n}: {val}")
             
-            for index, n in enumerate(chunk):
-                val = fetch_val(sb, n)
-                # i + index để hiển thị đúng số thứ tự tổng quát trong log
-                print(f"{i + index}. {n}: {val}")
-                results.append({"Player": n, "Price": val})
-                
-                # Nghỉ ngắn giữa mỗi cầu thủ để mô phỏng người dùng thật
-                time.sleep(1)
-
-            # Sau khi duyệt xong một đợt (50 người), nghỉ 15 giây trước khi tiếp tục
-            if i + CHUNK_SIZE < len(all_names):
-                time.sleep(15)
-    
-    df_results = pd.DataFrame(results)
-    store_database(df_results)
+            # Ghi trực tiếp vào Database sau mỗi lượt thay vì chờ một đợt
+            df_row = pd.DataFrame([{"Player": n, "Price": val}])
+            
+            # Cầu thủ đầu tiên tạo bảng/ghi đè, các cầu thủ sau nối thêm dữ liệu
+            if index == 0:
+                store_database(df_row, if_exists="replace")
+            else:
+                store_database(df_row, if_exists="append")
     
