@@ -4,77 +4,86 @@ from pathlib import Path
 from seleniumbase import SB
 from thefuzz import fuzz
 
-DB_PATH = Path(__file__).resolve().parents[2] / "data" / "database.db"
 
-
-def get_names(path):
-    # Load player names.
+# Load player names
+def all_players(path: Path):
     with sqlite3.connect(str(path)) as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT Player FROM statistic")
+        cursor.execute("SELECT Player FROM statistic ORDER BY rowid")
         return [row[0] for row in cursor.fetchall()]
 
 
-def fetch_val(sb, name):
-    # Fetch transfer value.
-    url = f"https://www.footballtransfers.com/en/search?search_value={urllib.parse.quote(name)}"
-    sb.open(url)
-    
-    # Wait for results.
-    for _ in range(16):
-        if sb.is_element_present("a.playerList-box"):
-            break
-        sb.sleep(0.5)
-    else:
-        return "N/a"
-
-    boxes = sb.find_elements("a.playerList-box")
-    best_title = None
-    highest_score = 0
-
-    # Find closest name match.
-    for b in boxes:
-        title = b.get_attribute("title")
-        if not title:
-            continue
-        score = fuzz.token_sort_ratio(name.lower(), title.strip().lower())
-        if score > highest_score:
-            highest_score = score
-            best_title = title.strip()
-    
-    # Process valid matches.
-    if best_title and highest_score > 80:
-        # Extract transfer price.
-        safe_title = best_title.replace('"', '\\"')
-        css_selector = f'a[title="{safe_title}"] span.player-tag'
-        if sb.is_element_present(css_selector):
-            return sb.get_text(css_selector).strip()
-    
-    return "N/a"
-
-
-def setup_price_table(conn):
-    # Setup price table.
+def exist_players(conn):
     cursor = conn.cursor()
-    cursor.execute("DROP TABLE IF EXISTS price")
-    cursor.execute("CREATE TABLE price (Player TEXT, Price TEXT)")
+    cursor.execute("SELECT Player FROM price")
+    return {row[0] for row in cursor.fetchall()}
+
+
+def price_table(conn):
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS price "
+        "(stat_order INTEGER, Player TEXT UNIQUE, Price TEXT)"
+    )
     conn.commit()
 
 
-if __name__ == "__main__":
-    all_names = get_names(DB_PATH)
+def fetch_val(sb, name: str):
+    url = f"https://www.footballtransfers.com/en/search?search_value={urllib.parse.quote(name)}"
+    sb.uc_open_with_reconnect(url)
+
+    try: sb.wait_for_element("a.playerList-box", timeout=12)
+    except Exception: return "N/a"
+
+    best_box, highest_score = None, 0
+    boxes = sb.find_elements("a.playerList-box")
     
-    with sqlite3.connect(str(DB_PATH)) as conn:
-        setup_price_table(conn)
+    for box in boxes:
+        title = box.get_attribute("title")
+        if not title: continue
+
+        score = fuzz.token_sort_ratio(name.lower(), title.strip().lower())
+        if score > highest_score:
+            highest_score = score
+            best_box = box
+
+            if score == 100: break
+
+    if best_box is not None and highest_score > 80:
+        tags = best_box.find_elements("css selector", "span.player-tag")
+        if tags: return tags[0].text.strip()
+
+    return "N/a"
+
+
+if __name__ == "__main__":
+    db_path = Path(__file__).resolve().parents[2] / "data" / "database.db"
+
+    all_names = all_players(db_path)
+    total = len(all_names)
+
+    with sqlite3.connect(str(db_path)) as conn:
+        price_table(conn)
+        existing = exist_players(conn)
+
+        pending = [
+            (i, name) for i, name in enumerate(all_names)
+            if name not in existing
+        ]
+        remaining = len(pending)
+
+        if remaining < total:
+            print(f"Resuming: {total - remaining}/{total} done, {remaining} remaining")
 
         with SB(uc=True, headless=True) as sb:
-            # Iterate all players.
-            for index, n in enumerate(all_names):
-                val = fetch_val(sb, n)
-                print(f"{index}. {n}: {val}")
-                
-                # Insert data immediately.
-                conn.execute("INSERT INTO price (Player, Price) VALUES (?, ?)", (n, val))
-        
-        # Commit after loop.
+            for count, (order, name) in enumerate(pending, start=1):
+                val = fetch_val(sb, name)
+                print(f"[{count}/{remaining}] {name}: {val}")
+
+                conn.execute(
+                    "INSERT OR IGNORE INTO price (stat_order, Player, Price) VALUES (?, ?, ?)",
+                    (order, name, val),
+                )
+                if count % 25 == 0: conn.commit()
+
         conn.commit()
+    print("Done.")
