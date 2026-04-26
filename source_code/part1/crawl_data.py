@@ -14,7 +14,7 @@ def fetch_stats(url):
         driver.uc_open_with_reconnect(url)
         # driver.uc_gui_click_captcha()
 
-        WebDriverWait(driver, 60).until(
+        WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.ID, "div_stats_standard"))
         )
 

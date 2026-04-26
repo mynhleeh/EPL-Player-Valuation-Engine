@@ -36,6 +36,7 @@
 \definecolor{codecomment}{RGB}{106,153,85}
 \definecolor{codestring}{RGB}{163,21,21}
 \definecolor{codekeyword}{RGB}{0,0,255}
+\definecolor{ptitblue}{RGB}{0,51,153}
 
 \lstdefinestyle{pythonstyle}{
   language=Python,
@@ -99,6 +100,10 @@
 \usepackage{indentfirst}
 \setlength{\parindent}{1cm}
 
+% --- TikZ for cover page decorations ---
+\usepackage{tikz}
+\usetikzlibrary{calc}
+
 
 \begin{document}
 
@@ -106,36 +111,105 @@
 % TITLE PAGE
 % =============================================================
 \begin{titlepage}
+\thispagestyle{empty}
+
+% --- Decorative double-line border with corner ornaments ---
+\begin{tikzpicture}[remember picture, overlay]
+  % Outer border
+  \draw[line width=1.6pt]
+    ([shift={(1.2cm,-1.2cm)}]current page.north west)
+    rectangle
+    ([shift={(-1.2cm,1.2cm)}]current page.south east);
+  % Inner border
+  \draw[line width=0.5pt]
+    ([shift={(1.45cm,-1.45cm)}]current page.north west)
+    rectangle
+    ([shift={(-1.45cm,1.45cm)}]current page.south east);
+
+  % --- Corner ornaments (decorative curls) ---
+  % Top-left
+  \draw[line width=1.2pt]
+    ([shift={(1.2cm,-1.2cm)}]current page.north west)
+    .. controls ++(0.6cm,0) and ++(0,-0.6cm) ..
+    ([shift={(1.2cm,-1.2cm)}]current page.north west);
+  \draw[line width=1.0pt, gray!70]
+    ([shift={(1.2cm,-1.2cm)}]current page.north west) ++(0.05cm,-0.05cm)
+    arc[start angle=180, end angle=270, x radius=0.8cm, y radius=0.8cm];
+  \draw[line width=1.0pt, gray!70]
+    ([shift={(1.2cm,-1.2cm)}]current page.north west) ++(0.05cm,-0.05cm)
+    arc[start angle=180, end angle=270, x radius=1.2cm, y radius=1.2cm];
+  % Top-right
+  \draw[line width=1.0pt, gray!70]
+    ([shift={(-1.2cm,-1.2cm)}]current page.north east) ++(-0.05cm,-0.05cm)
+    arc[start angle=0, end angle=-90, x radius=0.8cm, y radius=0.8cm];
+  \draw[line width=1.0pt, gray!70]
+    ([shift={(-1.2cm,-1.2cm)}]current page.north east) ++(-0.05cm,-0.05cm)
+    arc[start angle=0, end angle=-90, x radius=1.2cm, y radius=1.2cm];
+  % Bottom-left
+  \draw[line width=1.0pt, gray!70]
+    ([shift={(1.2cm,1.2cm)}]current page.south west) ++(0.05cm,0.05cm)
+    arc[start angle=180, end angle=90, x radius=0.8cm, y radius=0.8cm];
+  \draw[line width=1.0pt, gray!70]
+    ([shift={(1.2cm,1.2cm)}]current page.south west) ++(0.05cm,0.05cm)
+    arc[start angle=180, end angle=90, x radius=1.2cm, y radius=1.2cm];
+  % Bottom-right
+  \draw[line width=1.0pt, gray!70]
+    ([shift={(-1.2cm,1.2cm)}]current page.south east) ++(-0.05cm,0.05cm)
+    arc[start angle=0, end angle=90, x radius=0.8cm, y radius=0.8cm];
+  \draw[line width=1.0pt, gray!70]
+    ([shift={(-1.2cm,1.2cm)}]current page.south east) ++(-0.05cm,0.05cm)
+    arc[start angle=0, end angle=90, x radius=1.2cm, y radius=1.2cm];
+\end{tikzpicture}
+
 \begin{center}
 
-\textbf{\Large POSTS AND TELECOMMUNICATIONS INSTITUTE OF TECHNOLOGY}\\[0.2cm]
-\textbf{\Large FACULTY OF INFORMATION TECHNOLOGY}\\[0.5cm]
+% --- University & Department header ---
+\textbf{\fontsize{13}{16}\selectfont POSTS AND TELECOMMUNICATIONS INSTITUTE OF TECHNOLOGY}\\[0.25cm]
+\textbf{\fontsize{13}{16}\selectfont FACULTY OF INFORMATION TECHNOLOGY}\\[0.15cm]
 
-\vspace{1.5cm}
-\rule{\linewidth}{0.5mm}\\[0.5cm]
-{\fontsize{28}{34}\selectfont\bfseries PROJECT REPORT\\[0.3cm]
-PYTHON PROGRAMMING}\\[0.5cm]
-\rule{\linewidth}{0.5mm}\\[1.2cm]
+% --- Dashed separator ---
+{\centering\rule[0.5ex]{10cm}{0.4pt}\par}
 
-{\Large\textbf{Topic:} Data Collection and Analysis of\\
-Premier League Players 2024--2025}\\[2.5cm]
+\vspace{0.8cm}
 
-\begin{minipage}{0.8\textwidth}
-{\large
-\begin{tabular*}{\linewidth}{@{} l l @{\extracolsep{\fill}} r @{}}
-\textbf{Students:} & \foreignlanguage{vietnamese}{Lê Anh Minh} & B24DCCE180 \\
-                    & \foreignlanguage{vietnamese}{Ứng Trọng Trình} & B24DCCE271 \\
-                    & \foreignlanguage{vietnamese}{Nguyễn Đinh Anh Quân} & B24DCCE222 \\[0.4cm]
-\textbf{Class:}    & \multicolumn{2}{l}{D24CQCE05-B} \\[0.4cm]
-\textbf{Instructor:} & \multicolumn{2}{l}{\foreignlanguage{vietnamese}{Lê Văn Vịnh}} \\
-                    & \multicolumn{2}{l}{\texttt{vinhlv@ptit.edu.vn}} \\
-\end{tabular*}
+% --- PTIT Logo ---
+\includegraphics[width=3.5cm]{logo.jpg}
+
+\vspace{0.8cm}
+
+% --- Subject title (blue, large, bold) ---
+{\fontsize{20}{26}\selectfont\bfseries\color{ptitblue}
+PROJECT REPORT\\[0.3cm]
+PYTHON PROGRAMMING}\\[0.8cm]
+
+% --- Group info ---
+{\large\textbf{Class:} \textbf{D24CQCE05-B}}\\[0.6cm]
+
+% --- Member table ---
+{\fontsize{11}{14}\selectfont
+\textit{Team Members}\\[0.3cm]
+
+\begin{tabular}{l c c}
+\textbf{Full Name} & \textbf{Student ID} & \textbf{Assignment} \\[0.15cm]
+\hline\\[-0.2cm]
+\foreignlanguage{vietnamese}{Lê Anh Minh} & B24DCCE180 & 1, 2, 3 \\[0.1cm]
+\foreignlanguage{vietnamese}{Ứng Trọng Trình} & B24DCCE271 & 1, 2, 3 \\[0.1cm]
+\foreignlanguage{vietnamese}{Nguyễn Đinh Anh Quân} & B24DCCE222 & 1, 2, 3 \\[0.3cm]
+\end{tabular}
 }
-\end{minipage}
+
+\vspace{0.8cm}
+
+% --- Instructor ---
+{\large\textbf{Instructor:} \foreignlanguage{vietnamese}{MSc. Lê Văn Vịnh}}\\[0.1cm]
+{\normalsize\texttt{vinhlv@ptit.edu.vn}}
 
 \vfill
-{\large Hanoi, April 2026}\\[0.3cm]
+
+% --- Footer: City & Year ---
+{\large Hanoi, 2026}\\[0.3cm]
 {\small \url{https://github.com/mynhleeh/Python-Programming-Project.git}}
+
 \end{center}
 \end{titlepage}
 
