@@ -10,3 +10,7 @@ __pycache__/
 *.log
 *.gz
 *.synctex.gz
+*.lof
+*.lot
+*.out
+*.toc
