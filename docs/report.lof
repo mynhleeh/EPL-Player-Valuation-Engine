@@ -1,0 +1,12 @@
+\babel@toc {english}{}\relax 
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {5.1}{\ignorespaces Elbow chart (left) and Silhouette chart (right) for K-Means clustering}}{16}{figure.caption.10}%
+\contentsline {figure}{\numberline {5.2}{\ignorespaces K-Means clustering results after PCA dimensionality reduction}}{16}{figure.caption.11}%
+\contentsline {figure}{\numberline {5.3}{\ignorespaces Actual vs.\ predicted transfer values. The dashed red line represents perfect fit ($y = x$).}}{19}{figure.caption.13}%
+\contentsline {figure}{\numberline {5.4}{\ignorespaces Feature importance in the final XGBoost model}}{20}{figure.caption.14}%
+\contentsline {figure}{\numberline {5.5}{\ignorespaces Residual distribution. A near-symmetric distribution around zero indicates no systematic bias.}}{20}{figure.caption.15}%
+\addvspace {10\p@ }

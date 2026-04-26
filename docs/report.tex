@@ -1,0 +1,711 @@
+\documentclass[a4paper,12pt]{report}
+
+% --- Encoding & Font ---
+\usepackage[utf8]{inputenc}
+\usepackage[T5,T1]{fontenc}
+\usepackage[vietnamese,english]{babel}
+\usepackage{times}
+
+% --- Page Layout ---
+\usepackage[top=2.5cm, bottom=2.5cm, left=3cm, right=2.5cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% --- Graphics ---
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+
+% --- Tables ---
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{tabularx}
+
+% --- Math ---
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% --- Code Listings ---
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codebg}{RGB}{248,248,248}
+\definecolor{codeframe}{RGB}{200,200,200}
+\definecolor{codecomment}{RGB}{106,153,85}
+\definecolor{codestring}{RGB}{163,21,21}
+\definecolor{codekeyword}{RGB}{0,0,255}
+
+\lstdefinestyle{pythonstyle}{
+  language=Python,
+  backgroundcolor=\color{codebg},
+  frame=single,
+  rulecolor=\color{codeframe},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{codekeyword}\bfseries,
+  commentstyle=\color{codecomment}\itshape,
+  stringstyle=\color{codestring},
+  showstringspaces=false,
+  breaklines=true,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=8pt,
+  tabsize=4,
+  captionpos=b,
+}
+\lstset{style=pythonstyle}
+
+% --- Hyperlinks ---
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+
+% --- Section Formatting (UI/UX optimized hierarchy) ---
+\usepackage{titlesec}
+
+\titleformat{\chapter}[display]
+  {\normalfont\fontsize{22}{26}\bfseries}
+  {Chapter \thechapter}{14pt}{\fontsize{22}{26}\bfseries}
+\titlespacing*{\chapter}{0pt}{-10pt}{24pt}
+
+\titleformat{\section}
+  {\normalfont\fontsize{16}{20}\bfseries}{\thesection}{1em}{}
+\titlespacing*{\section}{0pt}{18pt}{10pt}
+
+\titleformat{\subsection}
+  {\normalfont\fontsize{13}{17}\bfseries}{\thesubsection}{1em}{}
+\titlespacing*{\subsection}{0pt}{14pt}{8pt}
+
+\titleformat{\subsubsection}
+  {\normalfont\fontsize{12}{15}\bfseries\itshape}{\thesubsubsection}{1em}{}
+\titlespacing*{\subsubsection}{0pt}{10pt}{6pt}
+
+% --- Caption ---
+\usepackage{caption}
+\captionsetup{font=small, labelfont=bf, skip=8pt}
+
+% --- Header / Footer ---
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+% --- TOC depth ---
+\setcounter{tocdepth}{3}
+\setcounter{secnumdepth}{3}
+
+% --- Indentation ---
+\usepackage{indentfirst}
+\setlength{\parindent}{1cm}
+
+
+\begin{document}
+
+% =============================================================
+% TITLE PAGE
+% =============================================================
+\begin{titlepage}
+\begin{center}
+
+\textbf{\Large POSTS AND TELECOMMUNICATIONS INSTITUTE OF TECHNOLOGY}\\[0.2cm]
+\textbf{\Large FACULTY OF INFORMATION TECHNOLOGY}\\[0.5cm]
+
+\vspace{1.5cm}
+\rule{\linewidth}{0.5mm}\\[0.5cm]
+{\fontsize{28}{34}\selectfont\bfseries PROJECT REPORT\\[0.3cm]
+PYTHON PROGRAMMING}\\[0.5cm]
+\rule{\linewidth}{0.5mm}\\[1.2cm]
+
+{\Large\textbf{Topic:} Data Collection and Analysis of\\
+Premier League Players 2024--2025}\\[2.5cm]
+
+\begin{minipage}{0.8\textwidth}
+{\large
+\begin{tabular*}{\linewidth}{@{} l l @{\extracolsep{\fill}} r @{}}
+\textbf{Students:} & \foreignlanguage{vietnamese}{Lê Anh Minh} & B24DCCE180 \\
+                    & \foreignlanguage{vietnamese}{Ứng Trọng Trình} & B24DCCE271 \\
+                    & \foreignlanguage{vietnamese}{Nguyễn Đinh Anh Quân} & B24DCCE222 \\[0.4cm]
+\textbf{Class:}    & \multicolumn{2}{l}{D24CQCE05-B} \\[0.4cm]
+\textbf{Instructor:} & \multicolumn{2}{l}{\foreignlanguage{vietnamese}{Lê Văn Vịnh}} \\
+                    & \multicolumn{2}{l}{\texttt{vinhlv@ptit.edu.vn}} \\
+\end{tabular*}
+}
+\end{minipage}
+
+\vfill
+{\large Hanoi, April 2026}\\[0.3cm]
+{\small \url{https://github.com/mynhleeh/Python-Programming-Project.git}}
+\end{center}
+\end{titlepage}
+
+% =============================================================
+% ABSTRACT
+% =============================================================
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+This report presents the complete design and implementation of a data analytics system for football players in the English Premier League, season 2024 -- 2025. The system is structured into three main phases:
+
+\begin{enumerate}
+    \item \textbf{Data Crawling:} Match statistics are automatically collected from FBref using SeleniumBase in Undetected Chrome mode, combined with transfer valuations from FootballTransfers via fuzzy string matching. All data is stored in an SQLite database.
+    
+    \item \textbf{Lookup Application (RESTful API):} A Flask server provides a RESTful API for querying player statistics by name or club, while a command-line client uses the Requests library to retrieve and export results as formatted tables and CSV files.
+    
+    \item \textbf{Analytics and Machine Learning:} This phase includes descriptive statistics per squad, player clustering using K-Means with PCA visualization, and a player valuation model built with XGBoost and Optuna hyperparameter optimization.
+\end{enumerate}
+
+The results demonstrate that the system operates reliably across all three phases, delivering a complete sports analytics pipeline from data acquisition to model evaluation.
+
+% =============================================================
+% TABLE OF CONTENTS
+% =============================================================
+\newpage
+\tableofcontents
+
+\newpage
+\listoffigures
+\addcontentsline{toc}{chapter}{List of Figures}
+
+\newpage
+\listoftables
+\addcontentsline{toc}{chapter}{List of Tables}
+
+
+% =============================================================
+% CHAPTER 1: INTRODUCTION
+% =============================================================
+\chapter{Introduction}
+
+\section{Background}
+
+Sports analytics has become an essential field in modern professional football. Top European clubs increasingly rely on quantitative models to evaluate player performance, predict potential, and estimate transfer values. The English Premier League---the highest-revenue club competition in the world---provides a rich and publicly accessible data source well-suited for building analytical systems.
+
+\section{Project Objectives}
+
+This project targets three primary objectives:
+\begin{itemize}
+    \item Build an automated web scraping system that collects data from multiple online sources, addressing technical challenges such as anti-bot mechanisms and dynamically rendered content.
+    \item Design a data query interface in the form of a RESTful API and a command-line application (CLI) supporting flexible lookups.
+    \item Apply machine learning techniques including clustering (K-Means) and regression (XGBoost) to discover data structure and predict transfer values.
+\end{itemize}
+
+\section{Scope}
+
+Data is limited to players with more than 90 total minutes played in the Premier League 2024--2025 season. Statistical data is sourced from FBref (\url{https://fbref.com}) and transfer valuations from FootballTransfers (\url{https://www.footballtransfers.com}).
+
+\section{Technology Stack}
+
+\begin{table}[H]
+\centering
+\caption{Summary of technologies and libraries used}
+\label{tab:tech_stack}
+\begin{tabularx}{\textwidth}{l l X}
+\toprule
+\textbf{Phase} & \textbf{Library} & \textbf{Role} \\
+\midrule
+Data Crawling  & SeleniumBase & Automated browser in UC mode \\
+               & Pandas       & DataFrame processing and transformation \\
+               & thefuzz      & Fuzzy string matching \\
+\midrule
+API \& Lookup  & Flask        & RESTful API server \\
+               & Requests     & HTTP client for CLI \\
+               & Tabulate     & Terminal table display \\
+\midrule
+Analytics \& ML & scikit-learn & K-Means, PCA, RobustScaler \\
+               & XGBoost      & Gradient boosting regression \\
+               & Optuna       & Bayesian hyperparameter optimization \\
+               & Matplotlib   & Data visualization \\
+               & Seaborn      & Statistical charts \\
+\midrule
+Storage        & SQLite       & Embedded relational database \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Project Structure}
+
+\begin{table}[H]
+\centering
+\caption{Project directory layout}
+\label{tab:project_structure}
+\begin{tabularx}{\textwidth}{l X}
+\toprule
+\textbf{Path} & \textbf{Description} \\
+\midrule
+\texttt{source\_code/part1/} & Data crawling module \\
+\texttt{source\_code/part2/} & API and lookup module \\
+\texttt{source\_code/part3/} & Analytics and machine learning module \\
+\texttt{source\_code/part3/core/} & Core package: config, loader, features, training, charts \\
+\texttt{data/} & Database, CSV outputs, charts \\
+\texttt{docs/} & Report and project documentation \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+
+% =============================================================
+% CHAPTER 2: DATA CRAWLING
+% =============================================================
+\chapter{Data Crawling}
+
+\section{Objective}
+
+This phase collects two datasets:
+\begin{enumerate}
+    \item \textbf{Match statistics} for all Premier League 2024--2025 players with more than 90 minutes played, from FBref.
+    \item \textbf{Transfer valuations} for each corresponding player from FootballTransfers.
+\end{enumerate}
+
+Both datasets are stored in separate tables (\texttt{statistic} and \texttt{price}) within a single SQLite database.
+
+\section{Methodology}
+
+\subsection{Collecting Match Statistics --- \texttt{crawl\_data.py}}
+
+\subsubsection{Anti-Bot Bypass Strategy}
+
+FBref employs anti-bot mechanisms and asynchronous JavaScript rendering, making simple \texttt{requests}-based approaches infeasible. The adopted solution uses SeleniumBase in \textit{Undetected Chrome} mode (\texttt{uc=True}), which fully emulates real browser behavior and bypasses automated detection systems such as Cloudflare.
+
+Additionally, \texttt{headless=True} mode runs the browser without a graphical interface, optimizing system resources during automated collection.
+
+\subsubsection{Extraction and Transformation Pipeline}
+
+The data processing pipeline after HTML retrieval follows these steps:
+
+\begin{enumerate}
+    \item \textbf{DOM Element Wait:} The \texttt{wait\_for\_element} function waits up to 20 seconds for the \texttt{\#stats\_standard} table to be fully rendered before extraction.
+    
+    \item \textbf{Multi-Level Column Handling:} The original HTML table uses a two-row header structure. The system automatically iterates through each column, concatenating level-0 and level-1 names with semantic suffixes (\texttt{\_perf} for Performance group, \texttt{\_per90} for Per 90 Minutes group).
+    
+    \item \textbf{Type Casting and Filtering:} Statistical columns are converted to numeric types via \texttt{pd.to\_numeric}. Players with total playing time $\leq 90$ minutes are removed to ensure statistical representativeness.
+    
+    \item \textbf{Storage:} The resulting DataFrame is written to the \texttt{statistic} table in SQLite using the \texttt{replace} strategy (overwrite).
+\end{enumerate}
+
+\subsection{Collecting Transfer Valuations --- \texttt{crawl\_transfer.py}}
+
+\subsubsection{Lookup and Matching Mechanism}
+
+For each player in the \texttt{statistic} table, the system performs a lookup on FootballTransfers:
+
+\begin{enumerate}
+    \item \textbf{URL Construction:} The player name is URL-encoded (\texttt{urllib.parse.quote}) and appended to the search endpoint.
+    
+    \item \textbf{Fuzzy String Matching:} Search results may return multiple players with similar names. The \texttt{token\_sort\_ratio} algorithm from the \texttt{thefuzz} library computes a similarity score between the query name and displayed names. Only results with similarity $> 80\%$ are accepted.
+    
+    \item \textbf{Value Extraction:} The transfer value is extracted from the \texttt{span.player-tag} CSS element of the best match.
+    
+    \item \textbf{Special Character Handling:} Names containing special characters (e.g., apostrophes in O'Shea) are handled by escaping characters in the CSS selector.
+\end{enumerate}
+
+\subsubsection{Incremental Write Strategy}
+
+Rather than accumulating all results in memory before writing, the system employs an \textit{incremental write} strategy: each player is written to the \texttt{price} table immediately after lookup. The first player uses \texttt{replace} mode (creates the table), while subsequent players use \texttt{append} mode. This approach ensures no data loss if the collection process is interrupted.
+
+\section{Results}
+
+The collected data comprises 25 statistical indicators per player (including personal info, match performance, and per-90-minute metrics) along with corresponding transfer values. All data is stored in \texttt{data/database.db} with two tables: \texttt{statistic} and \texttt{price}.
+
+\begin{table}[H]
+\centering
+\caption{Key columns in the \texttt{statistic} table}
+\label{tab:stat_cols}
+\begin{tabularx}{\textwidth}{l l X}
+\toprule
+\textbf{Group} & \textbf{Column} & \textbf{Meaning} \\
+\midrule
+Info         & Player, Nation, Pos, Squad & Name, nationality, position, squad \\
+Matches      & MP, Starts, Min, 90s       & Matches played, starts, minutes, 90s \\
+Performance  & Gls\_perf, Ast\_perf, CrdY\_perf & Goals, assists, yellow cards \\
+Per 90       & Gls\_per90, Ast\_per90      & Goals/90, assists/90 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+
+% =============================================================
+% CHAPTER 3: RESTFUL API APPLICATION
+% =============================================================
+\chapter{RESTful API Lookup Application}
+
+\section{Objective}
+
+Build a two-tier lookup system: (1) a RESTful API server using Flask, and (2) a command-line client using the Requests library, enabling player stat lookups by name or club.
+
+\section{Methodology}
+
+\subsection{API Server --- \texttt{app.py}}
+
+\subsubsection{Architecture}
+
+The server is built on Flask with the following architectural features:
+
+\begin{itemize}
+    \item \textbf{Per-Request Database Connection Management:} Each HTTP request receives a dedicated SQLite connection through the Flask context variable (\texttt{flask.g}). Connections are automatically closed after the request completes via the \texttt{@app.teardown\_appcontext} decorator, preventing connection leaks.
+    
+    \item \textbf{Dynamic Query Building:} SQL queries are constructed dynamically based on input parameters. The \texttt{LIKE} operator with \texttt{\%} wildcards enables partial matching. Parameterized queries (\texttt{?} placeholders) are used to prevent SQL injection.
+\end{itemize}
+
+\subsubsection{Endpoint Specification}
+
+\begin{table}[H]
+\centering
+\caption{API endpoint specification}
+\label{tab:api_spec}
+\begin{tabularx}{\textwidth}{l l l X}
+\toprule
+\textbf{Method} & \textbf{Endpoint} & \textbf{Parameters} & \textbf{Description} \\
+\midrule
+GET & \texttt{/api/search} & \texttt{name}, \texttt{club} & Returns player stats as JSON \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Response codes include: \texttt{200 OK} (success), \texttt{400 Bad Request} (missing parameters), \texttt{404 Not Found} (no matching data).
+
+\subsection{Command-Line Lookup Client --- \texttt{lookup.py}}
+
+The client operates as follows:
+
+\begin{enumerate}
+    \item Parses command-line arguments via \texttt{argparse} with two parameters: \texttt{--name} and \texttt{--club}.
+    \item Sends an HTTP GET request to the Flask server with query parameters.
+    \item Displays a summary table (name, squad, nationality, position, age) on the terminal via \texttt{tabulate}.
+    \item Exports full detailed statistics to a CSV file with an auto-generated filename based on the input parameters (e.g., \texttt{Salah\_Liverpool.csv}).
+\end{enumerate}
+
+Usage syntax:
+\begin{lstlisting}[language=bash, caption={Command-line lookup syntax}]
+python lookup.py --name "Salah" --club "Liverpool"
+\end{lstlisting}
+
+\section{Results}
+
+The API system runs reliably on port 5000, supporting simultaneous lookups by name and club. Result CSV files are saved to \texttt{data/lookup\_ans/}.
+
+
+% =============================================================
+% CHAPTER 4: SQUAD ANALYTICS
+% =============================================================
+\chapter{Squad-Level Statistical Analysis}
+
+\section{Objective}
+
+Compute descriptive statistics (median, mean, standard deviation) for each player metric grouped by squad, and determine the best-performing team in the Premier League 2024--2025.
+
+\section{Methodology}
+
+\subsection{Descriptive Statistics --- \texttt{squad\_analytics.py}}
+
+The system queries all data from the \texttt{statistic} table, groups by the \texttt{Squad} column, and simultaneously computes three statistical measures for 18 numeric indicators using \texttt{groupby().agg()}. Results are exported to \texttt{squad\_stats\_summary.csv}.
+
+\subsection{Squad Ranking --- Multivariate Weighted Scoring Model}
+
+To answer the question ``Which team has the best overall form?'', a Weighted Scoring Model is constructed based on the following logic:
+
+\begin{enumerate}
+    \item \textbf{Indicator Selection:} Seven representative metrics are chosen, covering three aspects: attacking (\texttt{G+A\_per90\_mean}, \texttt{G-PK\_per90\_mean}, \texttt{G+A\_perf\_median}), consistency (\texttt{Gls\_per90\_std}, \texttt{Min\_std}), and discipline (\texttt{CrdR\_perf\_mean}, \texttt{CrdY\_perf\_mean}).
+    
+    \item \textbf{Direction Assignment:} Each metric is assigned a direction coefficient ($+1$ for positive indicators, $-1$ for negative ones). For example, goals are positive; cards are negative.
+    
+    \item \textbf{Min--Max Normalization:} Each metric is normalized to $[0, 1]$:
+    \begin{equation}
+        x_{\text{norm}} = \frac{x - x_{\min}}{x_{\max} - x_{\min}} \quad \text{(positive indicator)}
+    \end{equation}
+    \begin{equation}
+        x_{\text{norm}} = \frac{x_{\max} - x}{x_{\max} - x_{\min}} \quad \text{(negative indicator)}
+    \end{equation}
+    
+    \item \textbf{Composite Scoring:} Each normalized metric is multiplied by its weight (total weights $= 1.0$), summed, and scaled to a percentage.
+\end{enumerate}
+
+\begin{table}[H]
+\centering
+\caption{Indicator weights in the squad ranking model}
+\label{tab:ranking_weights}
+\begin{tabular}{l c c}
+\toprule
+\textbf{Metric} & \textbf{Direction} & \textbf{Weight} \\
+\midrule
+G+A\_per90\_mean     & $+1$ & 0.25 \\
+G-PK\_per90\_mean    & $+1$ & 0.20 \\
+G+A\_perf\_median    & $+1$ & 0.15 \\
+CrdR\_perf\_mean     & $-1$ & 0.12 \\
+Gls\_per90\_std      & $-1$ & 0.10 \\
+Min\_std             & $-1$ & 0.10 \\
+CrdY\_perf\_mean     & $-1$ & 0.08 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Results}
+
+The file \texttt{squad\_stats\_summary.csv} contains complete descriptive statistics for all 20 squads. The multivariate ranking model identifies the best-performing team based on the balance between attacking strength, consistency, and discipline.
+
+
+% =============================================================
+% CHAPTER 5: CLUSTERING & PLAYER VALUATION
+% =============================================================
+\chapter{Player Clustering and Valuation via Machine Learning}
+
+\section{Player Clustering with K-Means}
+
+\subsection{Objective}
+
+Classify outfield players into groups with similar playing characteristics based on performance metrics, and determine the optimal number of clusters.
+
+\subsection{Tools}
+
+scikit-learn (\texttt{KMeans}, \texttt{PCA}, \texttt{RobustScaler}, \texttt{silhouette\_score}), Matplotlib.
+
+\subsection{Methodology --- \texttt{clusters.py}}
+
+\subsubsection{Data Preprocessing}
+
+Goalkeepers (\texttt{GK}) are excluded due to fundamentally different statistical profiles. Four features are selected and engineered:
+
+\begin{itemize}
+    \item \texttt{Gls\_per90}: Goals per 90 minutes --- represents scoring ability.
+    \item \texttt{Ast\_per90}: Assists per 90 minutes --- represents creative output.
+    \item \texttt{Agg\_per90}: Aggression index (yellow cards $+ 2 \times$ red cards) per 90 minutes --- represents discipline level.
+    \item \texttt{PK\_per90}: Penalties scored per 90 minutes --- reflects set-piece responsibility.
+\end{itemize}
+
+Data is normalized using \texttt{RobustScaler}, which uses the median and interquartile range (IQR) instead of mean and standard deviation, reducing the influence of outliers---common in football data.
+
+\subsubsection{Determining the Optimal Number of Clusters}
+
+Two complementary methods are used:
+
+\begin{itemize}
+    \item \textbf{Elbow Method:} Plots inertia (within-cluster sum of squares) against $k$ from 2 to 10. The ``elbow point''---where the rate of inertia decrease slows significantly---indicates the optimal $k$.
+    
+    \item \textbf{Silhouette Score:} Measures how similar each data point is to its own cluster compared to neighboring clusters, with values in $[-1, 1]$. The highest average Silhouette score corresponds to the optimal $k$.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{../data/charts/elbow_silhouettes.png}
+    \caption{Elbow chart (left) and Silhouette chart (right) for K-Means clustering}
+    \label{fig:elbow_silhouette}
+\end{figure}
+
+\subsubsection{K-Means Algorithm}
+
+After determining the optimal $k$, the K-Means++ algorithm is executed. K-Means++ improves centroid initialization by selecting initial centers that are spread far apart, accelerating convergence and reducing the risk of local optima. The parameter \texttt{n\_init=10} ensures the algorithm runs 10 times with different initial centroid sets, retaining the best result (lowest inertia).
+
+\subsubsection{Visualization with PCA}
+
+Principal Component Analysis (PCA) is applied to reduce dimensionality from 4 to 2 and 3 dimensions, enabling visual scatter plots:
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{../data/charts/kmeans_2d.png}
+        \caption{2D cluster visualization}
+        \label{fig:kmeans_2d}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{../data/charts/kmeans_3d.png}
+        \caption{3D cluster visualization}
+        \label{fig:kmeans_3d}
+    \end{subfigure}
+    \caption{K-Means clustering results after PCA dimensionality reduction}
+    \label{fig:kmeans_viz}
+\end{figure}
+
+PCA works by finding principal components---linear combinations of original features that explain the largest variance in the data. The first two principal components typically capture the majority of information, enabling approximate cluster structure representation on a plane.
+
+
+\section{Player Valuation with XGBoost}
+
+\subsection{Objective}
+
+Build a regression model to predict player transfer values based on match statistics, using XGBoost combined with Optuna hyperparameter optimization.
+
+\subsection{Methodology}
+
+\subsubsection{Data Loading and Merging --- \texttt{core/loader.py}}
+
+Data from the \texttt{statistic} and \texttt{price} tables in SQLite is combined via a \texttt{LEFT JOIN} on the \texttt{Player} field. Squad-level descriptive statistics (\texttt{squad\_stats\_summary.csv}) are then merged on the \texttt{Squad} field, providing team-level context for each player.
+
+\subsubsection{Feature Engineering --- \texttt{core/features.py}}
+
+The feature design process encompasses multiple groups:
+
+\begin{enumerate}
+    \item \textbf{Target Variable Processing:} Transfer values are extracted from strings (removing \texteuro{} and M symbols), converted to numeric type. Players without price data are dropped.
+    
+    \item \textbf{Position Encoding:} The \texttt{Pos} column (which may contain multiple comma-separated positions) is One-Hot encoded, creating binary variables for each position.
+    
+    \item \textbf{Player-Level Features:}
+    \begin{itemize}
+        \item $\texttt{Squad\_Status} = \texttt{Starts} / \texttt{MP}$ --- starting ratio.
+        \item $\texttt{Stamina\_Trust} = \texttt{Min} / \texttt{MP}$ --- average minutes per match.
+        \item $\texttt{NPG\_Efficiency} = (\texttt{Gls} - \texttt{PK}) / \texttt{Min}$ --- non-penalty goal efficiency.
+        \item $\texttt{Discipline\_Risk} = (\texttt{CrdY} + 2 \times \texttt{CrdR}) / \texttt{Min}$ --- discipline risk.
+        \item $\texttt{Assist\_Efficiency} = \texttt{Ast} / \texttt{Min}$ --- assist efficiency.
+    \end{itemize}
+    
+    \item \textbf{Squad-Level Features:}
+    \begin{itemize}
+        \item $\texttt{Min\_Z\_Score}$ --- Z-score of playing time relative to squad.
+        \item $\texttt{Age\_Diff\_Squad}$ --- age difference from squad average.
+        \item $\texttt{Offensive\_Share\_Proxy}$ --- individual offensive contribution ratio.
+        \item $\texttt{Squad\_Age\_Profile}$, $\texttt{Squad\_Rotation\_Index}$, $\texttt{Squad\_Discipline}$ --- tactical characteristics of the squad.
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection{Model Training --- \texttt{core/training.py}}
+
+\textbf{Log Transformation:} The target variable (transfer value) follows a strongly right-skewed distribution. A $\log(1+x)$ transformation is applied to approximate normality, improving regression model performance.
+
+\textbf{XGBoost Algorithm:} eXtreme Gradient Boosting is an ensemble method based on gradient boosting that sequentially builds decision trees, where each new tree learns from the residuals of the preceding ensemble. Key regularization mechanisms include:
+
+\begin{itemize}
+    \item \textbf{Monotone Constraints:} Enforce logical relationships (e.g., more goals $\Rightarrow$ higher value, more cards $\Rightarrow$ lower value).
+    \item \textbf{Interaction Constraints:} Limit interactions between feature groups (attacking, fitness, discipline) to prevent overfitting on meaningless combinations.
+    \item \textbf{L1/L2 Regularization:} \texttt{reg\_alpha} and \texttt{reg\_lambda} control model complexity.
+\end{itemize}
+
+\textbf{Hyperparameter Optimization with Optuna:} The Optuna framework uses the Tree-structured Parzen Estimator (TPE)---a Bayesian optimization method---to intelligently search the hyperparameter space. Cross-validation uses \texttt{RepeatedStratifiedKFold} ($k=5$, 3 repeats) with stratification by value quantiles (\texttt{qcut} with 10 bins), ensuring each fold has a similar transfer value distribution.
+
+\begin{table}[H]
+\centering
+\caption{Optuna hyperparameter search space}
+\label{tab:optuna_space}
+\begin{tabular}{l l l}
+\toprule
+\textbf{Group} & \textbf{Parameter} & \textbf{Range} \\
+\midrule
+Optimization     & learning\_rate       & $[10^{-3}, 0.5]$ (log) \\
+                 & objective            & squarederror / pseudohubererror \\
+\midrule
+Regularization   & min\_split\_loss     & $[10^{-4}, 10]$ (log) \\
+                 & reg\_alpha            & $[10^{-3}, 100]$ (log) \\
+                 & reg\_lambda           & $[10^{-8}, 100]$ (log) \\
+\midrule
+Tree Structure   & max\_depth            & $[2, 7]$ \\
+                 & min\_child\_weight    & $[1, 15]$ \\
+\midrule
+Sampling         & subsample            & $[0.1, 1.0]$ (log) \\
+                 & colsample\_bytree    & $[0.1, 1.0]$ (log) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Model Evaluation --- \texttt{evaluation.py}}
+
+The model is evaluated on the test set (20\% of data) with three metrics:
+
+\begin{itemize}
+    \item \textbf{RMSE} (Root Mean Squared Error): Measures average error, sensitive to large errors.
+    \item \textbf{MAE} (Mean Absolute Error): Measures average absolute error.
+    \item \textbf{R\textsuperscript{2}} (Coefficient of Determination): Proportion of variance explained by the model.
+\end{itemize}
+
+A Dummy Regressor (predicting the mean value) serves as a baseline for comparison, ensuring XGBoost learns genuine relationships in the data rather than just memorizing central tendencies.
+
+\subsection{Results}
+
+Three chart types are automatically generated:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{../data/charts/actual_vs_predicted.png}
+    \caption{Actual vs.\ predicted transfer values. The dashed red line represents perfect fit ($y = x$).}
+    \label{fig:actual_vs_predicted}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{../data/charts/feature_importance.png}
+    \caption{Feature importance in the final XGBoost model}
+    \label{fig:feature_importance}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{../data/charts/residual_analysis.png}
+    \caption{Residual distribution. A near-symmetric distribution around zero indicates no systematic bias.}
+    \label{fig:residuals}
+\end{figure}
+
+Each test-set player is classified as \textit{Undervalued}, \textit{Overvalued}, or \textit{Fair Valued}. Detailed results are exported to \texttt{player\_valuation\_results.xlsx}.
+
+
+% =============================================================
+% CHAPTER 6: CONCLUSION
+% =============================================================
+\chapter{Conclusion}
+
+\section{Summary}
+
+This project successfully completed all three required phases:
+
+\begin{enumerate}
+    \item \textbf{Data Crawling:} The automated crawling system using SeleniumBase (UC mode) successfully collected match statistics and transfer valuations from two online sources, handling technical challenges including anti-bot mechanisms, dynamic content loading, and fuzzy name matching.
+    
+    \item \textbf{Lookup Application:} The Flask RESTful API and CLI client provide a flexible lookup interface, supporting partial-match search and multi-format output (JSON, terminal tables, CSV).
+    
+    \item \textbf{Analytics and Machine Learning:} Squad-level descriptive statistics combined with a weighted ranking model enable comprehensive performance assessment. K-Means clustering (with $k$ selected via Elbow and Silhouette methods) successfully groups players by playing style. The XGBoost model with Optuna optimization predicts transfer values based on performance data.
+\end{enumerate}
+
+\section{Limitations}
+
+\begin{itemize}
+    \item Dataset size is limited to a single season, affecting model generalizability.
+    \item Transfer values are influenced by many off-pitch factors (brand, contract length, age) that match statistics do not fully capture.
+    \item The clustering model uses four features; this could be expanded to capture more playing-style dimensions.
+\end{itemize}
+
+\section{Future Work}
+
+\begin{itemize}
+    \item Expand data collection across multiple seasons and leagues to increase sample size.
+    \item Integrate advanced metrics (expected goals, progressive passes) from supplementary sources.
+    \item Develop an interactive web dashboard for the lookup and visualization modules.
+    \item Experiment with alternative model architectures (LightGBM, CatBoost, Neural Networks) for performance comparison.
+\end{itemize}
+
+
+% =============================================================
+% REFERENCES
+% =============================================================
+\begin{thebibliography}{9}
+
+\bibitem{fbref}
+Sports Reference LLC, ``FBref.com --- Football Statistics and History,''
+\url{https://fbref.com/en/}, accessed April 2026.
+
+\bibitem{fbtransfers}
+Football Transfers, ``Player Valuations and Transfer Data,''
+\url{https://www.footballtransfers.com}, accessed April 2026.
+
+\bibitem{xgboost}
+T. Chen and C. Guestrin, ``XGBoost: A Scalable Tree Boosting System,''
+in \textit{Proc. 22nd ACM SIGKDD Int. Conf. Knowledge Discovery and Data Mining}, 2016, pp. 785--794.
+
+\bibitem{optuna}
+T. Akiba, S. Sano, T. Yanase, T. Ohta, and M. Koyama,
+``Optuna: A Next-generation Hyperparameter Optimization Framework,''
+in \textit{Proc. 25th ACM SIGKDD Int. Conf. Knowledge Discovery and Data Mining}, 2019, pp. 2623--2631.
+
+\bibitem{kmeans}
+J. MacQueen, ``Some Methods for Classification and Analysis of Multivariate Observations,''
+in \textit{Proc. Fifth Berkeley Symp. Mathematical Statistics and Probability}, vol. 1, 1967, pp. 281--297.
+
+\bibitem{sklearn}
+F. Pedregosa \textit{et al.}, ``Scikit-learn: Machine Learning in Python,''
+\textit{J. Machine Learning Research}, vol. 12, pp. 2825--2830, 2011.
+
+\bibitem{selenium}
+SeleniumBase, ``SeleniumBase --- Browser Automation Framework,''
+\url{https://github.com/seleniumbase/SeleniumBase}, accessed April 2026.
+
+\end{thebibliography}
+
+\end{document}
+
