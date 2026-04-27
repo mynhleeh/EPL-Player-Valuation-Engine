@@ -1,0 +1,95 @@
+Player                , Actual_Transfer_Value_M, Predicted_Value_M, Residual_Error      , Valuation_Status
+Leny Yoro             ,     72.40000000000002  ,       34.073044  , 38.32695617675783   , Overvalued
+Nicolas Jackson       ,     54.39999999999999  ,       92.62381   , -38.22380981445313  , Undervalued
+Lucas Paquetá         ,     61.90000000000001  ,       28.106733  , 33.79326667785646   , Overvalued
+Ollie Watkins         ,     60.89999999999999  ,       31.800232  , 29.09976806640624   , Overvalued
+Mohamed Salah         ,     48.199999999999996 ,       19.419533  , 28.78046722412109   , Overvalued
+Lewis Hall            ,     34.099999999999994 ,       61.152023  , -27.052023315429693 , Undervalued
+Carlos Baleba         ,     66.69999999999999  ,       42.13899   , 24.56101150512694   , Overvalued
+Bruno Guimarães       ,     81.79999999999997  ,       57.615444  , 24.18455581665036   , Overvalued
+Rodrigo Muniz         ,      8.1               ,       30.405128  , -22.305128479003905 , Undervalued
+João Pedro            ,     71.3               ,       52.96496   , 18.33504180908203   , Overvalued
+Harry Amass           ,      8.699999999999998 ,       26.368675  , -17.668675231933598 , Undervalued
+Robert Sánchez        ,     21.900000000000002 ,       39.16304   , -17.26304016113281  , Undervalued
+Trevoh Chalobah       ,     44.20000000000001  ,       30.01105   , 14.188950729370127  , Overvalued
+Filip Jørgensen       ,     20.0               ,       34.166122  , -14.166122436523438 , Undervalued
+Tyrique George        ,     26.8               ,       39.33177   , -12.531771850585937 , Undervalued
+Jacob Murphy          ,     14.199999999999998 ,       26.130632  , -11.930632400512698 , Undervalued
+Andrés García         ,      6.499999999999999 ,       17.229252  , -10.729251861572266 , Undervalued
+Sandro Tonali         ,     61.09999999999999  ,       50.487583  , 10.612416839599597  , Overvalued
+Aaron Wan-Bissaka     ,     25.2               ,       34.157604  , -8.957604217529298  , Undervalued
+Marc Guéhi            ,     58.000000000000014 ,       49.329556  , 8.670444488525405   , Overvalued
+João Félix            ,     18.999999999999996 ,       27.45736   , -8.457359313964847  , Undervalued
+Jack Clarke           ,     16.500000000000004 ,        8.564794  , 7.9352064132690465  , Overvalued
+Myles Lewis-Skelly    ,     56.6               ,       48.81856   , 7.781438446044923   , Overvalued
+Matthijs de Ligt      ,     45.800000000000004 ,       38.113182  , 7.6868179321289105  , Overvalued
+Alejandro Garnacho    ,     59.89999999999999  ,       52.371025  , 7.528974914550773   , Overvalued
+Leif Davis            ,     22.600000000000005 ,       15.294825  , 7.305175399780278   , Overvalued
+Yukinari Sugawara     ,      4.700000000000001 ,       11.6456375 , -6.94563751220703   , Undervalued
+Nathan Aké            ,     18.4               ,       11.51942   , 6.880580329895018   , Overvalued
+James Bree            ,      1.6               ,        8.361209  , -6.76120891571045   , Undervalued
+Trent Alexander-Arnold,     67.40000000000002  ,       61.22067   , 6.1793312072754105  , Overvalued
+Marshall Munetsi      ,     17.400000000000002 ,       11.41114   , 5.988859558105471   , Overvalued
+André                 ,     37.50000000000001  ,       31.530533  , 5.969467163085945   , Overvalued
+Crysencio Summerville ,     25.60000000000001  ,       19.840986  , 5.759013748168954   , Overvalued
+Axel Tuanzebe         ,      4.3               ,       10.035365  , -5.735365104675293  , Undervalued
+Joshua King           ,     16.8               ,       11.182014  , 5.6179855346679695  , Overvalued
+Omari Hutchinson      ,     26.400000000000002 ,       20.89377   , 5.506229782104494   , Overvalued
+Daniel Muñoz          ,     28.1               ,       22.640717  , 5.459283447265626   , Overvalued
+Idrissa Gana Gueye    ,      7.9               ,        2.7182448 , 5.181755208969117   , Overvalued
+Jakub Kiwior          ,     25.400000000000002 ,       30.498531  , -5.098531341552732  , Undervalued
+John Stones           ,     12.4               ,        7.353264  , 5.046736145019532   , Overvalued
+Daichi Kamada         ,     11.300000000000002 ,       16.304918  , -5.004918289184568  , Undervalued
+James Mcatee          ,     25.60000000000001  ,       20.832903  , 4.767097091674813   , Overvalued
+Federico Chiesa       ,     20.099999999999998 ,       15.365467  , 4.734532928466795   , Overvalued
+Destiny Udogie        ,     51.699999999999996 ,       46.98382   , 4.716178131103511   , Overvalued
+Carlos Forbs          ,     12.999999999999996 ,        8.382516  , 4.617484092712399   , Overvalued
+Robin Olsen           ,      6.300000000000001 ,        1.8323243 , 4.467675733566285   , Overvalued
+Conor Chaplin         ,      2.3               ,        6.3439465 , -4.04394645690918   , Undervalued
+Matty Cash            ,     27.2               ,       30.953678  , -3.7536781311035163 , Undervalued
+Jack Taylor           ,      1.7999999999999998,        5.2544017 , -3.4544016838073732 , Undervalued
+Kyle Walker-Peters    ,     14.400000000000002 ,       17.847326  , -3.4473262786865213 , Undervalued
+Ben Chilwell          ,     13.399999999999999 ,        9.956948  , 3.443051719665526   , Overvalued
+Wilfred Ndidi         ,     10.600000000000001 ,       14.0420885 , -3.4420885086059556 , Undervalued
+Joshua Acheampong     ,     27.5               ,       24.118849  , 3.3811511993408203  , Overvalued
+Ryan Yates            ,     14.3               ,       17.610981  , -3.3109809875488274 , Undervalued
+Callum Wilson         ,      6.300000000000001 ,        3.2255602 , 3.0744398117065437  , Overvalued
+Pape Matar Sarr       ,     45.0               ,       41.981995  , 3.01800537109375    , Overvalued
+Ben Brereton          ,      8.600000000000001 ,        5.7177854 , 2.8822146415710463  , Overvalued
+Enes Ünal             ,      9.8               ,       12.653801  , -2.853800964355468  , Undervalued
+Luke Thomas           ,      7.599999999999998 ,       10.213843  , -2.613843345642092  , Undervalued
+Vitaliy Mykolenko     ,     30.599999999999998 ,       33.209873  , -2.6098731994628928 , Undervalued
+Wataru Endo           ,      7.199999999999999 ,        4.692993  , 2.5070068359374993  , Overvalued
+Marc Cucurella        ,     37.89999999999999  ,       40.168133  , -2.2681327819824304 , Undervalued
+Jurriën Timber        ,     65.29999999999998  ,       63.102013  , 2.197987365722639   , Overvalued
+Armel Bella Kotchap   ,      9.000000000000002 ,        6.8326564 , 2.1673436164855975  , Overvalued
+Christian Eriksen     ,      2.3               ,        4.430903  , -2.13090295791626   , Undervalued
+Dejan Kulusevski      ,     59.39999999999999  ,       57.291145  , 2.1088546752929602  , Overvalued
+Diego Carlos          ,      7.199999999999999 ,        5.1167088 , 2.0832912445068352  , Overvalued
+Jota Silva            ,     13.399999999999999 ,       15.456722  , -2.056722259521486  , Undervalued
+Chris Wood            ,      5.4               ,        7.250453  , -1.8504529953002926 , Undervalued
+Gabriel Jesus         ,     21.900000000000002 ,       23.663641  , -1.7636409759521463 , Undervalued
+Dan Burn              ,      6.800000000000002 ,        8.499791  , -1.6997911453247054 , Undervalued
+Nicolás Domínguez     ,     17.600000000000005 ,       19.146643  , -1.5466426849365185 , Undervalued
+Martin Dúbravka       ,      1.0               ,        2.5153458 , -1.515345811843872  , Undervalued
+Casemiro              ,      6.599999999999998 ,        5.176208  , 1.423791980743406   , Overvalued
+Daniel Bentley        ,      1.2000000000000002,        2.565306  , -1.3653059482574461 , Undervalued
+Joël Veltman          ,      1.9               ,        3.184393  , -1.2843929290771485 , Undervalued
+Marcus Tavernier      ,     25.5               ,       26.779104  , -1.279104232788086  , Undervalued
+Michail Antonio       ,      0.6000000000000001,        1.7006772 , -1.1006771564483642 , Undervalued
+Adam Smith            ,      0.9000000000000001,        1.98071   , -1.0807100296020506 , Undervalued
+Andrew Robertson      ,     12.7               ,       11.786762  , 0.9132377624511712  , Overvalued
+Willian               ,      0.5               ,        1.3191946 , -0.8191945552825928 , Undervalued
+Adam Webster          ,      5.1               ,        4.2876363 , 0.8123637199401852  , Overvalued
+Matheus Nunes         ,     46.49999999999999  ,       47.250813  , -0.7508125305175852 , Undervalued
+Jordan Ayew           ,      1.2000000000000002,        1.8660839 , -0.6660838603973387 , Undervalued
+Vladimír Coufal       ,      1.7999999999999998,        2.448572  , -0.6485719203948976 , Undervalued
+Danny Ward            ,      0.8               ,        0.4449777 , 0.3550222992897034  , Overvalued
+James Milner          ,      1.0               ,        0.67164135, 0.32835865020751953 , Overvalued
+Issa Diop             ,     12.9               ,       13.152299  , -0.25229892730712855, Undervalued
+Darwin Núñez          ,     32.9               ,       32.710476  , 0.1895240783691392  , Overvalued
+Luis Sinisterra       ,     10.600000000000001 ,       10.752094  , -0.1520942687988267 , Undervalued
+Łukasz Fabiański      ,      0.8               ,        0.90152085, -0.10152084827423091, Undervalued
+Jason Steele          ,      1.0               ,        0.91561556, 0.08438444137573242 , Overvalued
+Adam Armstrong        ,     10.000000000000002 ,       10.040256  , -0.04025554656982244, Undervalued
+Hamza Choudhury       ,      3.7               ,        3.6692567 , 0.030743312835693537, Overvalued

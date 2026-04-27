@@ -30,7 +30,7 @@ def run_evaluation(best_params: dict, x_train, y_train, x_test, y_test, player_t
     dummy = DummyRegressor(strategy="mean")
     dummy.fit(x_train, y_train)
     dummy_y_pred = dummy.predict(x_test)
-    cmp_dummy_xgb["Dummy Regressor"] = get_metrics(y_test, dummy_y_pred)
+    cmp_dummy_xgb["Dummy_Regressor"] = get_metrics(y_test, dummy_y_pred)
 
     # XGB Regressor
     final_params = {**BASE_XGB_PARAMS, **best_params}
@@ -43,8 +43,9 @@ def run_evaluation(best_params: dict, x_train, y_train, x_test, y_test, player_t
     y_pred = final_model.predict(x_test)
 
     # Export Compare dummy vs xgb Regressor
-    cmp_dummy_xgb['XGB Regressor'] = get_metrics(y_test, y_pred)
+    cmp_dummy_xgb['XGB_Regressor'] = get_metrics(y_test, y_pred)
     cmp_dummy_xgb.to_excel(str(OUTPUTS_PATH / "compare_dummy_xgb.xlsx"), index=False)
+    cmp_dummy_xgb.to_csv(str(OUTPUTS_PATH / "compare_dummy_xgb.csv"), index=False)
 
     # Export Test
     actual_prices = np.expm1(y_test)
@@ -65,6 +66,7 @@ def run_evaluation(best_params: dict, x_train, y_train, x_test, y_test, player_t
     test_stat['Abs_Error'] = test_stat['Residual_Error'].abs()
     test_stat = test_stat.sort_values(by='Abs_Error', ascending=False).drop(columns=['Abs_Error'])
     test_stat.to_excel(str(OUTPUTS_PATH / "player_valuation_results.xlsx"), index=False)
+    test_stat.to_csv(str(OUTPUTS_PATH / "player_valuation_results.csv"), index=False)
 
     # Charts
     plot_comparison(y_test, y_pred)

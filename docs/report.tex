@@ -191,7 +191,7 @@
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
-This report presents the complete design and implementation of a data analytics system for football players in the English Premier League, season 2024 -- 2025. The system is structured into three main phases:
+This report presents the complete design and implementation of a data analytics system for football players in the English Premier League, season 2024--2025. The system is structured into three main phases:
 
 \begin{enumerate}
     \item \textbf{Data Crawling:} Match statistics are automatically collected from FBref using SeleniumBase in Undetected Chrome mode, combined with transfer valuations from FootballTransfers via fuzzy string matching. All data is stored in an SQLite database.
@@ -321,13 +321,13 @@ Alternative approaches were considered. While the combination of the \texttt{req
 
 Pandas is the standard library for tabular data analysis. In this phase, \texttt{pd.read\_}\allowbreak\texttt{html()} is used to parse HTML tables into DataFrames, automatically handling multi-level headers. Processed data is then written to SQLite using \texttt{to\_}\allowbreak\texttt{sql()}, which supports configurable strategies such as \texttt{replace} or \texttt{append}.
 
-Pandas offers a higher-level abstraction than manual DOM parsing with \texttt{BeautifulSoup} or \texttt{lxml}, reducing boilerplate code and error-prone index manipulation.
+Pandas offers a higher abstraction than manual DOM parsing with \texttt{Beautiful}\allowbreak\texttt{Soup} or \texttt{lxml}, reducing boilerplate and error-\allowbreak prone index manipulation.
 
 \subsection{thefuzz}
 
-The \texttt{thefuzz} library (formerly \texttt{fuzzywuzzy}) implements fuzzy string matching algorithms based on Levenshtein edit distance. The specific algorithm used in this project is \texttt{token\_sort\_ratio}, which operates by: (1)~tokenizing both input strings into words, (2)~sorting tokens alphabetically to eliminate word-order sensitivity, and (3)~computing the similarity ratio between the sorted sequences. This is particularly useful for matching player names that may appear in different orders across data sources (e.g., ``Mohamed Salah'' vs.\ ``Salah, Mohamed'').
+The \texttt{thefuzz} library (formerly \texttt{fuzzywuzzy}) implements fuzzy string matching algorithms based on Levenshtein edit distance. The specific algorithm used in this project is \texttt{token\_sort\_}\allowbreak\texttt{ratio}, which operates by: (1)~tokenizing both input strings into words, (2)~sorting tokens alphabetically to eliminate word-order sensitivity, and (3)~computing the similarity ratio between the sorted sequences. This is particularly useful for matching player names that may appear in different orders across data sources (e.g., ``Mohamed Salah'' vs.\ ``Salah, Mohamed'').
 
-Python's standard library provides \texttt{difflib.SequenceMatcher} for similar tasks, but it is significantly slower and offers fewer algorithmic variants compared to \texttt{thefuzz}. The latter was selected for its robust implementation of string similarity metrics and sufficient performance for the project's scale, which involves approximately 400 player lookups.
+Python's standard library provides \texttt{difflib.}\allowbreak\texttt{SequenceMatcher} for similar tasks, but it is significantly slower and offers fewer algorithmic variants compared to \texttt{thefuzz}. The latter was selected for its robust implementation of string similarity metrics and sufficient performance for the project's scale, which involves approximately 400 player lookups.
 
 \subsection{SQLite}
 
@@ -389,7 +389,7 @@ Per 90       & Gls\_per90, Ast\_per90      & Goals/90, assists/90 \\
 % =============================================================
 % CHAPTER 3: RESTFUL API APPLICATION
 % =============================================================
-\chapter{RESTful API Lookup Application}
+\chapter{\texorpdfstring{RESTful API\\ Lookup Application}{RESTful API Lookup Application}}
 
 \section{Objective}
 
@@ -462,7 +462,7 @@ $ python lookup.py --name "Salah" --club "Liverpool"
 +===============+===========+==========+=======+=======+
 | Mohamed Salah | Liverpool | eg EGY   | MF    |    32 |
 +---------------+-----------+----------+-------+-------+
-Saved detailed stat
+Saved detailed stats to file.
 \end{lstlisting}
 
 \section{Results}
@@ -473,35 +473,37 @@ The summary table provided by \texttt{tabulate} allows for quick verification of
 
 
 % =============================================================
-% CHAPTER 4: SQUAD ANALYTICS
+% CHAPTER 4: EXPLORATORY DATA ANALYSIS & PLAYER PROFILING
 % =============================================================
-\chapter{Squad-Level Statistical Analysis}
+\chapter{\texorpdfstring{Exploratory Data Analysis and\\ Player Profiling}{Exploratory Data Analysis and Player Profiling}}
 
-\section{Objective}
+\section{Squad-Level Statistical Analysis}
+
+\subsection{Objective}
 
 Compute descriptive statistics (median, mean, standard deviation) for each player metric grouped by squad, and determine the best-performing team in the Premier League 2024--2025.
 
-\section{Tools and Libraries}
+\subsection{Tools and Libraries}
 
 This section describes the primary tools used for computing squad-level descriptive statistics and the multivariate ranking model.
 
-\subsection{Pandas}
+\subsubsection{Pandas}
 
 Pandas serves as the core computation engine for this chapter. The \texttt{groupby().}\allowbreak\texttt{agg()} method implements the split-apply-combine paradigm: data is split by the \texttt{Squad} column, three aggregation functions (median, mean, standard deviation) are applied simultaneously to 18 numeric indicators, and results are combined into a single summary DataFrame. Additionally, the Min--Max normalization and weighted scoring computations are vectorized using Pandas' built-in arithmetic operations, avoiding explicit Python loops.
 
 An alternative approach would be to perform aggregation directly in SQL using \texttt{GROUP BY} with aggregate functions. While this is efficient for simple statistics, computing multiple aggregations across many columns simultaneously is cumbersome in SQL and less flexible when combined with subsequent normalization steps. The \texttt{NumPy} library could also perform the underlying computations, but lacks DataFrame abstractions (named columns, group operations) that significantly improve code readability.
 
-\subsection{SQLite}
+\subsubsection{SQLite}
 
-SQLite is used as the data source, with Pandas' \texttt{read\_sql()} function executing a \texttt{SELECT * FROM statistic} query to load the full dataset into memory for analysis. The file-based nature of SQLite ensures that the crawling module (Chapter~2) and analytics module share a single, consistent data source without requiring any server configuration.
+SQLite is used as the data source, with Pandas' \texttt{read\_sql()} function executing a selective \texttt{SELECT} query to load the necessary performance metrics into memory. The file-based nature of SQLite ensures that the crawling module (Chapter~2) and analytics module share a single, consistent data source without requiring any server configuration.
 
-\section{Methodology}
+\subsection{Methodology}
 
-The evaluation of squad performance relies on aggregating individual player statistics into cohesive team-level indicators. This pipeline is implemented in \texttt{squad\_analytics.py} and operates in three distinct analytical phases.
+The evaluation of squad performance relies on aggregating individual player statistics into cohesive team-level indicators. This pipeline is implemented in \texttt{squad\_}\allowbreak\texttt{analytics.}\allowbreak\texttt{py} and operates in three distinct analytical phases.
 
-\subsection{Descriptive Statistics Computation}
+\subsubsection{Descriptive Statistics Computation}
 
-The \textbf{\texttt{calculate\_stats()}} function is responsible for the foundational data aggregation. To optimize memory footprint and execution speed, it does not load the entire \texttt{statistic} table. Instead, it dynamically constructs an SQL query (using \texttt{", ".join(...)}) to \texttt{SELECT} only the \texttt{Squad} column and 18 specific numeric indicators. These indicators span player demographics (Age), playing time (Matches Played, Minutes), absolute performance (Goals, Assists, Cards), and normalized tactical output (per-90-minute metrics).
+The \textbf{\texttt{calculate\_}\allowbreak\texttt{stats()}} function is responsible for the foundational data aggregation. To optimize memory footprint and execution speed, it does not load the entire \texttt{statistic} table. Instead, it dynamically constructs an SQL query (using \texttt{", ".join(...)}) to \texttt{SELECT} only the \texttt{Squad} column and 18 specific numeric indicators. These indicators span player demographics (Age), playing time (Matches Played, Minutes), absolute performance (Goals, Assists, Cards), and normalized tactical output (per-90-minute metrics).
 
 After loading the data, the function uses Pandas' \texttt{groupby('Squad')} to partition the dataset by team. It then applies \texttt{agg()} to simultaneously compute three distinct descriptive statistics for each indicator:
 \begin{itemize}
@@ -510,13 +512,15 @@ After loading the data, the function uses Pandas' \texttt{groupby('Squad')} to p
     \item \textbf{Standard Deviation (\texttt{std}):} Captures the variance within the squad. A low standard deviation indicates high consistency and balanced distribution of responsibilities, whereas a high standard deviation indicates reliance on a few specific individuals.
 \end{itemize}
 
-Pandas' \texttt{agg()} function inherently generates a hierarchical \texttt{MultiIndex} for columns (e.g., a top level for 'Age' and a sub-level for 'mean'). To ensure compatibility with machine learning models and CSV exports, the function uses a list comprehension to flatten these columns into descriptive strings such as \texttt{Age\_median} and \texttt{Gls\_perf\_std}.
+\begin{sloppypar}
+Pandas' \texttt{agg()} function inherently generates a hierarchical \texttt{Multi}\allowbreak\texttt{Index} for columns (e.g., a top level for 'Age' and a sub-level for 'mean'). To ensure compatibility with machine learning models and CSV exports, the function uses a list comprehension to flatten these columns into descriptive strings such as \texttt{Age\_}\allowbreak\texttt{median} and \texttt{Gls\_}\allowbreak\texttt{perf\_}\allowbreak\texttt{std}.
+\end{sloppypar}
 
-\subsection{Identifying Statistical Leaders}
+\subsubsection{Identifying Statistical Leaders}
 
-Operating on the newly aggregated descriptive statistics, the \textbf{\texttt{get\_max\_stats(df)}} function serves to profile the extreme bounds of the league by identifying which team leads in every calculated category. 
+Based on the aggregated descriptive statistics, the \textbf{\texttt{get\_max\_}\allowbreak\texttt{stats(df)}} function profiles the league's extreme bounds by identifying which team leads in each category.
+It achieves this by first temporarily setting the \texttt{Squad} column as the DataFrame index via \texttt{set\_}\allowbreak\texttt{index('Squad')}, effectively isolating the numeric data matrix. The function then performs a dual-extraction:
 
-It achieves this by first temporarily setting the \texttt{Squad} column as the DataFrame index via \texttt{set\_index('Squad')}, effectively isolating the numeric data matrix. The function then performs a dual-extraction:
 \begin{enumerate}
     \item It invokes the \texttt{max()} method to determine the scalar maximum value recorded across all 20 teams for each column.
     \item Concurrently, it employs the \texttt{idxmax()} method to return the specific index (the name of the Squad) that holds that maximum value.
@@ -524,7 +528,7 @@ It achieves this by first temporarily setting the \texttt{Squad} column as the D
 
 These two resulting Pandas Series are then horizontally concatenated into a new, highly readable summary DataFrame containing three columns: \texttt{Stat} (the statistical indicator), \texttt{Squad} (the record-holding team), and \texttt{Max\_Value} (the peak value achieved). This provides rapid analytical insights, easily answering queries such as "Which team has the highest median age?" or "Which team exhibits the highest variance in goals scored?"
 
-\subsection{Multivariate Ranking Model}
+\subsubsection{Multivariate Ranking Model}
 
 The \textbf{\texttt{rank\_squads(data)}} function implements a Multivariate Weighted Scoring Model to definitively rank the teams. It first defines an evaluation configuration containing seven selected metrics (attacking efficiency, discipline, and stability), their directional properties ($+1$ for positive impacts like goals, $-1$ for negative impacts like cards), and their respective weight distributions. For each metric, the algorithm determines the empirical minimum and maximum values across all 20 teams. It applies a Min-Max normalization transformation to scale every value precisely into the $[0, 1]$ interval. The normalization formula dynamically adapts based on the metric's property:
 
@@ -535,13 +539,13 @@ The \textbf{\texttt{rank\_squads(data)}} function implements a Multivariate Weig
     x_{\text{norm}} = \frac{x_{\max} - x}{x_{\max} - x_{\min}} \quad \text{(negative indicator)}
 \end{equation}
 
-Finally, the normalized values are multiplied by their assigned weights and summed horizontally for each squad. The final composite score is scaled by 100 to present a percentage-based evaluation, and the dataset is sorted in descending order to reveal the top-performing team.
+Finally, the normalized values are multiplied by their weights and summed for each squad. The final composite score is scaled by 100 to provide a percentage-based evaluation, and the dataset is sorted in descending order to reveal the top-performing team.
 
 To provide a comprehensive evaluation of a squad's overall performance and form, the multivariate model selects specific indicators representing attacking efficiency, discipline, and squad stability. The selected metrics, their directional properties (where $+1$ indicates higher values are better, and $-1$ indicates lower values are preferred), and their relative weights are detailed below:
 
 \begin{itemize}
-    \item \textbf{\texttt{G+A\_per90\_mean} (Weight: 0.25, Direction: $+1$):} The average Goals and Assists per 90 minutes. This is the primary indicator of a team's attacking output efficiency, carrying the highest weight as direct goal contributions are the strongest predictors of winning matches.
-    \item \textbf{\texttt{G-PK\_per90\_mean} (Weight: 0.20, Direction: $+1$):} The average Non-Penalty Goals per 90 minutes. This measures the team's ability to score from open play, isolating tactical offensive strength from penalty-taking opportunities.
+    \item \textbf{\texttt{G+A\_}\allowbreak\texttt{per90\_}\allowbreak\texttt{mean} (Weight: 0.25, Direction: $+1$):} The average Goals and Assists per 90 minutes. This is the primary indicator of a team's attacking output efficiency, carrying the highest weight as direct goal contributions are the strongest predictors of winning matches.
+    \item \textbf{\texttt{G-PK\_}\allowbreak\texttt{per90\_}\allowbreak\texttt{mean} (Weight: 0.20, Direction: $+1$):} The average Non-Penalty Goals per 90 minutes. This measures the team's ability to score from open play, isolating tactical offensive strength from penalty-taking opportunities.
     \item \textbf{\texttt{G+A\_perf\_median} (Weight: 0.15, Direction: $+1$):} The median total Goals and Assists per player. Using the median reduces the skew from individual star players, measuring the baseline attacking contribution expected from an average squad member.
     \item \textbf{\texttt{CrdR\_perf\_mean} (Weight: 0.12, Direction: $-1$):} The average red cards per player. This negative indicator reflects severe disciplinary issues that drastically reduce a team's performance probability by forcing them to play with numerical disadvantages.
     \item \textbf{\texttt{Gls\_per90\_std} (Weight: 0.10, Direction: $-1$):} The standard deviation of Goals per 90 minutes. A high variance indicates over-reliance on a single goalscorer. A lower value (preferred) suggests goal-scoring responsibilities are well-distributed, making the team's offense more unpredictable and harder to defend against.
@@ -568,100 +572,71 @@ CrdY\_perf\_mean     & $-1$ & 0.08 \\
 \end{tabular}
 \end{table}
 
-\section{Results}
+\subsection{Results}
 
 The results of the squad analytics pipeline are presented in alignment with the three methodological phases.
 
-\subsection{Descriptive Statistics Summary}
+\subsubsection{Descriptive Statistics Summary}
 
-The results of the descriptive statistical analysis are consolidated in the \texttt{squad\_stats\_summary.csv} file, providing a comprehensive overview of the metrics for all 20 Premier League squads. Table~\ref{tab:squad_stats_summary_sample} presents an illustrative sample of this data, specifically detailing the age distribution (median, mean, and standard deviation) and participation frequency (median and mean matches played) for a subset of the teams.
+The results of the descriptive statistical analysis are consolidated in the \texttt{squad\_}\allowbreak\texttt{stats\_}\allowbreak\texttt{summary.}\allowbreak\texttt{csv} file, providing a comprehensive overview of the metrics for all 20 Premier League squads. Table~\ref{tab:squad_stats_summary_sample} presents an illustrative sample of this data, specifically detailing the age distribution (median, mean, and standard deviation) and participation frequency (median and mean matches played) for a subset of the teams.
 
 \begin{table}[H]
 \centering
-\caption{Sample of squad\_stats\_summary.csv}
+\caption{Sample of \texttt{squad\_}\allowbreak\texttt{stats\_}\allowbreak\texttt{summary.}\allowbreak\texttt{csv}}
 \label{tab:squad_stats_summary_sample}
-\csvreader[
-  tabular={lrrrrr},
-  table head=\toprule Squad & Age\_median & Age\_mean & Age\_std & MP\_median & MP\_mean \\\midrule,
-  table foot=\bottomrule,
-  late after line=\\,
-  range=1-5
-]{../data/squad_stats_summary.csv}{1=\squad, 2=\agemed, 3=\agemean, 4=\agestd, 5=\mpmed, 6=\mpmean}{%
-  \squad & \num{\agemed} & \num{\agemean} & \num{\agestd} & \num{\mpmed} & \num{\mpmean}
-}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X r r r r r}
+  \toprule Squad & Age (Med) & Age (Mean) & Age (Std) & MP (Med) & MP (Mean) \\\midrule
+  \csvreader[
+    late after line=\\,
+    respect underscore,
+    range=1-5
+  ]{../data/squad_stats_summary.csv}{Squad=\squad,Age_median=\agemed,Age_mean=\agemean,Age_std=\agestd,MP_median=\mpmed,MP_mean=\mpmean}{%
+    \squad & \num{\agemed} & \num{\agemean} & \num{\agestd} & \num{\mpmed} & \num{\mpmean}
+  }%
+  \bottomrule
+\end{tabularx}
 \end{table}
 
-\subsection{Statistical Leaders Summary}
+\subsubsection{Statistical Leaders Summary}
 
 The data was analyzed to extract the maximum values across all teams for each statistical indicator, identifying the squads that lead in each category. A summary of these top-performing teams per metric (\texttt{max\_stats\_summary}) is presented in Table~\ref{tab:max_stats_summary}.
 
 \csvreader[
   longtable={l l r},
-  table head=\caption{Teams with maximum values for each statistical indicator (max\_stats\_summary)} \label{tab:max_stats_summary} \\ \toprule \textbf{Stat} & \textbf{Squad} & \textbf{Max Value} \\ \midrule \endfirsthead
+  table head=\caption[Teams with maximum values for each statistical indicator]{Teams with maximum values for each statistical indicator (\texttt{max\_}\allowbreak\texttt{stats\_}\allowbreak\texttt{summary.}\allowbreak\texttt{csv})} \label{tab:max_stats_summary} \\ \toprule \textbf{Stat} & \textbf{Squad} & \textbf{Max Value} \\ \midrule \endfirsthead
              \caption[]{Teams with maximum values for each statistical indicator (continued)} \\ \toprule \textbf{Stat} & \textbf{Squad} & \textbf{Max Value} \\ \midrule \endhead
              \midrule \multicolumn{3}{r}{\textit{Continued on next page}} \\ \endfoot
              \bottomrule \endlastfoot,
   respect underscore,
   late after line=\\
-]{../data/max_stats_summary.csv}{Stat=\stat, Squad=\squad, Max_Value=\val}{%
+]{../data/max_stats_summary.csv}{Stat=\stat,Squad=\squad,Max_Value=\val}{%
   \stat & \squad & \num{\val}
-}
+}%
 
-\subsection{Squad Rankings}
+\subsubsection{Squad Rankings}
 
 The multivariate ranking model evaluates all squads based on the balance between attacking strength, consistency, and discipline. Based on the calculated scores, \textbf{Manchester City} emerged as the most impressive team in the league with a score of 80.16.
 
-
-% =============================================================
-% CHAPTER 5: CLUSTERING & PLAYER VALUATION
-% =============================================================
-\chapter{Player Clustering and Valuation via Machine Learning}
-
-\section{Tools and Libraries}
-
-This chapter leverages advanced machine learning frameworks and statistical visualization tools to discover player archetypes and predict market valuations.
-
-\subsection{scikit-learn}
-
-scikit-learn is the premier library for classical machine learning in Python, providing a consistent API for clustering, dimensionality reduction, and regression. In this project, it is used for implementing the \texttt{KMeans} algorithm, \texttt{PCA} (Principal Component Analysis), and \texttt{RobustScaler} for data normalization. Its built-in metrics, such as \texttt{silhouette\_score}, are essential for validating the clustering logic.
-
-Compared to deep learning frameworks like \texttt{TensorFlow} or \texttt{PyTorch}, scikit-learn is significantly more efficient for tabular datasets of this scale. It provides highly optimized implementations of traditional algorithms that are more interpretable and easier to tune for sports analytics.
-
-\subsection{XGBoost and Algorithm Selection Justification}
-
-XGBoost (Extreme Gradient Boosting) is a scalable tree boosting system that serves as the core predictive engine for player valuation. Its selection over other machine learning algorithms (such as Linear Regression, Random Forest, or LightGBM) is justified by its specific mathematical properties that perfectly align with the characteristics of football transfer data, as implemented in \texttt{core/training.py}:
-
-\begin{itemize}
-    \item \textbf{Non-linearities and Interactions (vs. Linear Regression):} The relationship between match statistics and market value is highly non-linear (e.g., the value difference between 15 and 20 goals is greater than between 0 and 5). XGBoost natively captures these complex, multi-dimensional feature interactions, whereas linear models would require manual polynomial feature engineering.
-    \item \textbf{Advanced Regularization for Small Data (vs. Random Forest):} The dataset is constrained to a single Premier League season ($\approx 400$ outfield players), making it highly susceptible to overfitting. While Random Forest builds independent trees, XGBoost applies mathematically rigorous $L1$ (\texttt{reg\_alpha}) and $L2$ (\texttt{reg\_lambda}) regularization penalties to the leaf weights. As seen in the Optuna search space, these parameters are actively tuned (ranging from $10^{-3}$ to $100$) to heavily penalize overly complex trees and ensure strong generalization.
-    \item \textbf{Outlier Robustness via Custom Objectives:} Transfer markets are notoriously skewed by superstar valuations (e.g., players valued over \pounds100M). To mitigate this, the code not only applies a logarithmic transformation (\texttt{np.log1p}) to the target variable but also dynamically tests the \texttt{reg:pseudohubererror} objective function. The Huber loss is less sensitive to extreme outliers than the standard Mean Squared Error (\texttt{reg:squarederror}) optimized by most baseline regressors.
-    \item \textbf{Sequential Evaluation and Early Stopping:} Unlike bagging methods, XGBoost's boosting architecture builds trees sequentially, learning from the residuals of previous iterations. The implementation leverages \texttt{early\_stopping\_rounds} within a \texttt{RepeatedStratifiedKFold} cross-validation loop. By monitoring a validation set (\texttt{eval\_set=[(x\_val, y\_val)]}), training halts exactly when performance plateaus, actively preventing the model from memorizing the training data.
-    \item \textbf{Native Categorical Support (vs. LightGBM):} While LightGBM is often preferred for massive datasets, XGBoost's robust performance on smaller datasets and its native categorical data support (controlled via \texttt{max\_cat\_to\_onehot} and \texttt{max\_cat\_threshold}) allow it to efficiently handle categorical features without exploding the dimensionality through traditional one-hot encoding.
-\end{itemize}
-
-\subsection{Optuna}
-
-Optuna is an automated hyperparameter optimization framework that utilizes Bayesian optimization, specifically the Tree-structured Parzen Estimator (TPE), to search the hyperparameter space. It intelligently samples configurations that are likely to improve the model's RMSE, rather than performing an exhaustive or random search.
-
-Traditional methods like \texttt{GridSearchCV} or \texttt{RandomizedSearchCV} are either too slow or too inefficient for complex models like XGBoost. Optuna's ability to "prune" (stop) unpromising trials early allows for a more thorough exploration of the search space within a shorter timeframe.
-
-\subsection{Matplotlib and Seaborn}
-
-Matplotlib is the foundational visualization library for Python, providing granular control over every plot element. Seaborn is a higher-level library built on top of Matplotlib that simplifies the creation of complex statistical charts like residual distributions and feature importance heatmaps.
-
-While interactive libraries like \texttt{Plotly} are useful for web dashboards, Matplotlib and Seaborn are superior for generating high-resolution, publication-quality static images for LaTeX reports. They offer better integration with the scientific Python stack and more precise control over typography and layout.
-
-\subsection{NumPy}
-
-NumPy provides the underlying numerical infrastructure for array-based computations. In this chapter, it is specifically used for mathematical transformations such as \texttt{log1p} and \texttt{expm1} to handle the right-skewed distribution of transfer values, as well as for vectorized conditional logic via \texttt{np.where}.
-
-Python's standard \texttt{math} library provides similar functions but lacks the ability to operate on entire data columns simultaneously. NumPy's C-based backend ensures that these transformations are performed with maximum efficiency.
 
 \section{Player Clustering with K-Means}
 
 \subsection{Objective}
 
 Classify outfield players into groups with similar playing characteristics based on performance metrics, and determine the optimal number of clusters.
+
+\subsection{Tools and Libraries}
+
+\subsubsection{scikit-learn}
+
+scikit-learn is the premier library for classical machine learning in Python, providing a consistent API for clustering, dimensionality reduction, and regression. In this project, it is used for implementing the \texttt{KMeans} algorithm, \texttt{PCA} (Principal Component Analysis), and \texttt{RobustScaler} for data normalization. Its built-in metrics, such as \texttt{silhouette\_score}, are essential for validating the clustering logic.
+
+Compared to deep learning frameworks like \texttt{TensorFlow} or \texttt{PyTorch}, scikit-learn is significantly more efficient for tabular datasets of this scale. It provides highly optimized implementations of traditional algorithms that are more interpretable and easier to tune for sports analytics.
+
+\subsubsection{Matplotlib and Seaborn}
+
+Matplotlib is the foundational visualization library for Python, providing granular control over every plot element. Seaborn is a higher-level library built on top of Matplotlib that simplifies the creation of complex statistical charts like residual distributions and feature importance heatmaps.
+
+While interactive libraries like \texttt{Plotly} are useful for web dashboards, Matplotlib and Seaborn are superior for generating high-resolution, publication-quality static images for LaTeX reports. They offer better integration with the scientific Python stack and more precise control over typography and layout.
 
 \subsection{Methodology}
 
@@ -670,12 +645,21 @@ The execution flow for categorizing players into performance-based clusters is o
 \begin{itemize}
     \item \textbf{\texttt{load\_stats()}:} This function connects to the SQLite database to retrieve raw match statistics. It immediately filters out Goalkeepers (\texttt{GK}), as their metrics are fundamentally incomparable to outfield players. The function then engineers two specialized features: an \texttt{Agg\_per90} index (combining yellow and red cards weighted by severity) and a \texttt{PK\_per90} ratio. It returns a refined dataset containing four core pillars of outfield play: goals, assists, aggression, and penalty duties. In the main execution block, this extracted dataset is passed through scikit-learn's \texttt{RobustScaler} to normalize the distributions while mitigating the impact of statistical outliers.
     
-    \item \textbf{\texttt{test\_clusters(data, max\_k)}:} To empirically determine the optimal number of clusters ($k$), this function iteratively fits a \texttt{KMeans} model for every $k$ from 2 up to 10. For each iteration, it utilizes the \texttt{k-means++} initialization strategy and runs 10 internal repetitions (\texttt{n\_init=10}) to avoid local optima. It records the model's \texttt{inertia\_} (for the Elbow method) and computes the \texttt{silhouette\_score} (measuring cluster cohesion and separation), storing these metrics in arrays.
+    \item \textbf{\texttt{test\_}\allowbreak\texttt{clusters(}\allowbreak\texttt{data, }\allowbreak\texttt{max\_}\allowbreak\texttt{k)}:}\\ To empirically determine the optimal number of clusters ($k$), this function iteratively fits a \texttt{KMeans} model for every $k$ from 2 up to 10. For each iteration, it utilizes the \texttt{k-means++} initialization strategy and runs 10 internal repetitions (\texttt{n\_init=10}) to avoid local optima. It records the model's \texttt{inertia\_} (for the Elbow method) and computes the \texttt{silhouette\_score} (measuring cluster cohesion and separation), storing these metrics in arrays.
     
-    \item \textbf{\texttt{plot\_metrics(elbow, silhouettes, max\_k)}:} This visualization function takes the arrays generated during the testing phase and constructs a dual-subplot Matplotlib figure. It plots the Elbow chart (inertia vs. $k$) alongside the Silhouette chart (score vs. $k$), saving the combined high-resolution image to the \texttt{charts} directory. The script then pauses execution to prompt the user to inspect these charts and input the optimal $k$ value.
+    \item \textbf{\texttt{plot\_}\allowbreak\texttt{metrics(}\allowbreak\texttt{elbow, }\allowbreak\texttt{silhouettes, }\allowbreak\texttt{max\_}\allowbreak\texttt{k)}:}\\ This visualization function takes the arrays generated during the testing phase and constructs a dual-subplot Matplotlib figure. It plots the Elbow chart (inertia vs. $k$) alongside the Silhouette chart (score vs. $k$), saving the combined high-resolution image to the \texttt{charts} directory. The script then pauses execution to prompt the user to inspect these charts and input the optimal $k$ value.
     
-    \item \textbf{\texttt{reduce\_dim(df, dimen)} \& \texttt{plot\_clusters(df, kmeans, dimen)}:} Once the final K-Means model is trained using the user-provided $k$, the results must be visualized. Since the data resides in a 4-dimensional feature space, \texttt{reduce\_dim()} employs Principal Component Analysis (\texttt{PCA}) to mathematically project the data down to either 2 or 3 principal components (dimensions). \texttt{plot\_clusters()} then utilizes these reduced coordinates to generate 2D and 3D scatter plots, color-coding each data point according to its assigned cluster label (\texttt{kmeans.labels\_}), and saving the final visual archetypes to disk.
+    \item \textbf{\texttt{reduce\_}\allowbreak\texttt{dim(}\allowbreak\texttt{df, }\allowbreak\texttt{dimen)} \& \texttt{plot\_}\allowbreak\texttt{clusters(}\allowbreak\texttt{df, }\allowbreak\texttt{kmeans, }\allowbreak\texttt{dimen)}:}\\ Once the final K-Means model is trained using the user-provided $k$, the results must be visualized. Since the data resides in a 4-dimensional feature space, \texttt{reduce\_dim()} employs Principal Component Analysis (\texttt{PCA}) to mathematically project the data down to either 2 or 3 principal components (dimensions). \texttt{plot\_clusters()} then utilizes these reduced coordinates to generate 2D and 3D scatter plots, color-coding each data point according to its assigned cluster label (\texttt{kmeans.labels\_}), and saving the final visual archetypes to disk.
 \end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{../data/charts/elbow_silhouettes.png}
+    \caption{Elbow and Silhouette charts for determining the optimal number of clusters}
+    \label{fig:elbow_silhouettes}
+\end{figure}
+
+As described in the execution flow, after the evaluation charts (Figure~\ref{fig:elbow_silhouettes}) are generated, the script pauses its execution. The user must visually inspect these metrics to determine the optimal number of clusters and manually input this $k$ value via the terminal console. Once the user provides the input, the script continues with the final K-Means clustering phase and subsequently generates the PCA-reduced scatter plots.
 
 \begin{figure}[H]
     \centering
@@ -697,52 +681,202 @@ The execution flow for categorizing players into performance-based clusters is o
 PCA works by finding principal components---linear combinations of original features that explain the largest variance in the data. The first two principal components typically capture the majority of information, enabling approximate cluster structure representation on a plane.
 
 
-\section{Player Valuation with XGBoost}
+% =============================================================
+% CHAPTER 5: PREDICTIVE MODELING FOR PLAYER VALUATION
+% =============================================================
+\chapter{\texorpdfstring{Predictive Modeling for\\ Player Valuation}{Predictive Modeling for Player Valuation}}
 
-\subsection{Objective}
+\section{Objective}
 
-Build a regression model to predict player transfer values based on match statistics, using XGBoost combined with Optuna hyperparameter optimization.
+The primary objective of this chapter is to build a robust, interpretable machine learning regression pipeline capable of predicting a player's transfer value (in million Euros) based on their match statistics and squad context. The system leverages Extreme Gradient Boosting (XGBoost) combined with Bayesian hyperparameter optimization (Optuna) to capture non-linear relationships and interactions inherent in the football transfer market.
 
-\subsection{Methodology}
+\section{System Architecture and Core Components}
 
-The valuation system is implemented across a unified pipeline comprising feature engineering, hyperparameter tuning, model training, and performance evaluation.
+The predictive modeling pipeline is highly modularized within the \texttt{core/} directory, ensuring clear separation of concerns from data loading to evaluation.
 
 \begin{itemize}
-    \item \textbf{\texttt{prepare\_features()} (in \texttt{core/features.py}):} After loading and merging the \texttt{statistic}, \texttt{price}, and \texttt{squad\_stats} tables, this function handles the comprehensive data preparation. It cleans the target variable by stripping currency symbols and coercing strings to numerics. It implements One-Hot encoding for the multi-valued \texttt{Pos} column. Furthermore, it mathematically constructs advanced player-level metrics (e.g., \texttt{Squad\_Status}, \texttt{NPG\_Efficiency}) and squad-level context metrics (e.g., \texttt{Min\_Z\_Score}), transforming raw statistics into meaningful tactical features.
-    
-    \item \textbf{\texttt{train\_model()} (in \texttt{core/training.py}):} This function governs the XGBoost model training process, heavily utilizing the Optuna optimization framework. Because player transfer values are strongly right-skewed, the target variable undergoes a \texttt{np.log1p} logarithmic transformation prior to training to approximate a normal distribution. The function defines a search space encompassing optimization parameters (learning rate), structural parameters (tree depth), and regularization mechanisms ($L1$/$L2$ penalties) to prevent overfitting. It utilizes a Bayesian optimization strategy (Tree-structured Parzen Estimator) over a \texttt{RepeatedStratifiedKFold} cross-validation scheme to find the hyperparameter combination that minimizes the Root Mean Squared Error (RMSE).
-    
-    \item \textbf{\texttt{run\_evaluation()} (in \texttt{evaluation.py}):} Acting as the final validation stage, this function receives the best hyperparameters discovered by Optuna and trains the final \texttt{XGBRegressor}. To establish a baseline, it also trains a \texttt{DummyRegressor} that naively predicts the mean value. It calls a helper function, \textbf{\texttt{get\_metrics()}}, which mathematically reverses the logarithmic transformation using \texttt{np.expm1} before computing the final RMSE, Mean Absolute Error (MAE), and $R^2$ scores, saving the comparative results to an Excel file.
-    
-    \item \textbf{Valuation Export:} Within \texttt{run\_evaluation()}, the script calculates the residual error (actual minus predicted price) for every player in the test set. Using \texttt{np.select}, it categorizes each player as \textit{Undervalued}, \textit{Overvalued}, or \textit{Fair Valued} based on the direction of the error. It sorts the dataset by absolute error and exports this comprehensive financial assessment to \texttt{player\_valuation\_results.xlsx}. Finally, it invokes visualization functions from \texttt{core/charts.py} to generate scatter plots of actual vs. predicted values, feature importance rankings, and residual distributions.
+    \item \textbf{\texttt{config.py}:} Centralizes critical hyperparameters (e.g., number of CV splits, early stopping rounds) and domain-knowledge constraints (Monotone and Interaction constraints).
+    \item \textbf{\texttt{loader.py}:} Responsible for executing complex SQL \texttt{LEFT JOIN} operations to merge the \texttt{statistic} table with the \texttt{price} table, and integrating the squad-level analytics generated in Chapter~4.
+    \item \textbf{\texttt{features.py}:} Implements data cleaning, one-hot encoding for positions, and advanced feature engineering.
+    \item \textbf{\texttt{training.py}:} Governs the XGBoost training loop, defining the objective function and executing the Optuna optimization trials over a Repeated Stratified K-Fold cross-validation scheme.
+    \item \textbf{\texttt{charts.py} \& \texttt{evaluation.py}:} Provide the final statistical metrics (RMSE, MAE, $R^2$), benchmark against a baseline model, classify players as Undervalued/Overvalued, and generate publication-quality visual diagnostics.
 \end{itemize}
 
-\subsection{Results}
+\section{Feature Engineering and Preprocessing}
 
-Three chart types are automatically generated:
+Data preprocessing, orchestrated by \texttt{features.py}, is critical for XGBoost to extract maximum signal from the limited dataset ($\approx 400$ players). Raw match statistics alone are insufficient to capture the nuances of market valuation, which often depends on relative performance, consistency, and tactical utility.
+
+\subsection{Categorical and Positional Handling}
+
+The dataset contains complex multi-valued categorical variables. Specifically, the \texttt{Pos} (Position) column often lists multiple roles for versatile players (e.g., ``FW,MF''). This is resolved using \texttt{str.get\_dummies(sep=',')}, which converts these into distinct binary one-hot encoded columns. 
+
+\textbf{Rationale:} Market value is significantly influenced by positional versatility. A player capable of occupying multiple roles on the pitch (e.g., a Full-back who can also play as a Defensive Midfielder) is often valued more highly due to the tactical flexibility they provide to a manager. One-hot encoding allows the model to learn the specific "premium" associated with certain position combinations. For single-valued categorical features like \texttt{Nation} and \texttt{Squad}, they are cast to Pandas \texttt{category} types to utilize XGBoost's native categorical support.
+
+\subsection{Advanced Tactical Metrics Construction}
+
+Raw volume statistics (total goals, total minutes) can be misleading if not normalized for playing time and tactical context. The pipeline engineers several advanced player-level metrics to isolate specific traits:
+
+\begin{itemize}
+    \item \textbf{Squad Status (\texttt{Starts / MP}):} 
+    \textit{Importance:} This ratio distinguishes a "core" player from a "rotation" player. A player who starts nearly every game they appear in is perceived as tactically indispensable, which directly correlates with higher market stability and valuation compared to a "super-sub" who might have high per-90 metrics but lacks the coach's trust for full matches.
+    
+    \item \textbf{Stamina Trust (\texttt{Min / MP}):} 
+    \textit{Importance:} This measures the average duration a player stays on the pitch. In modern high-intensity football, the ability to maintain performance for 90 minutes is a premium physical asset. It acts as a proxy for both physical fitness and tactical reliability.
+    
+    \item \textbf{Non-Penalty Goal Efficiency (\texttt{(Gls - PK) / Min}):} 
+    \textit{Importance:} Penalties can artificially inflate a player's goal tally. By isolating non-penalty goals, the model focuses on "organic" attacking threat and finishing ability from open play, which is a much stronger indicator of a player's fundamental quality and market price.
+    
+    \item \textbf{Discipline Risk (\texttt{(CrdY + 2*CrdR) / Min}):} 
+    \textit{Importance:} Aggression can be a liability. Players with high disciplinary records face frequent suspensions, reducing their availability. The market often devalues "risky" players who might miss crucial games, and this metric allows the model to learn the negative coefficient associated with poor discipline.
+\end{itemize}
+
+\subsection{Integration of Squad Context}
+
+A player's value is not determined in a vacuum; it is relative to their environment. By merging the \texttt{squad\_stats\_summary.csv} from Chapter~4 via \texttt{loader.py}, the model gains access to relative metrics that define the player's hierarchy:
+
+\begin{itemize}
+    \item \textbf{Minutes Z-Score (\texttt{Min\_Z\_Score}):} 
+    \textit{Importance:} This is a critical indicator of hierarchy. A player who plays significantly more than their squad average (high Z-score) is the "engine" of the team. Conversely, a player with a low Z-score in a high-performing team might be a "fringe" player. This allows the model to distinguish between a "star" in a mid-table club and a "bench-warmer" in a top-tier club.
+    
+    \item \textbf{Offensive Share Proxy:} 
+    \textit{Importance:} This captures how much of a team's offensive output flows through a single player. Players who carry a high percentage of their team's scoring burden are "carries" and command significantly higher transfer fees due to their unique impact on results.
+    
+    \item \textbf{Age Difference (\texttt{Age\_Diff\_Squad}):} 
+    \textit{Importance:} This defines the player's role in the squad lifecycle. A young player in a veteran squad often represents "future potential" (high resale value), while a veteran in a young squad represents "leadership" but lower long-term investment value.
+\end{itemize}
+
+\section{Model Training and Optimization}
+
+\subsection{Target Variable Transformation}
+
+The distribution of player transfer values is heavily right-skewed, with the majority of players valued under \pounds20M and a long tail of superstars valued over \pounds80M. To stabilize variance and ensure the model does not disproportionately prioritize outliers, the target variable undergoes a logarithmic transformation using \texttt{np.log1p} prior to training. Predictions are later reverted using \texttt{np.expm1} for evaluation.
+
+\subsection{Domain Knowledge Injection via Constraints}
+
+Configured in \texttt{config.py}, the model is forced to obey logical footballing rules, preventing overfitting to noise:
+\begin{itemize}
+    \item \textbf{Monotone Constraints:} Forces the model to learn specific directional relationships. For example, Age has no constraint ($0$, as value peaks mid-career), Minutes and Goals have a strictly positive constraint ($1$, more is always better for value), and Red Cards have a strictly negative constraint ($-1$).
+    \item \textbf{Interaction Constraints:} Limits the feature space by forcing trees to only branch on related features. Variables are grouped into specific interaction sets: (1) Attacking Metrics, (2) Experience and Participation, and (3) Disciplinary actions.
+\end{itemize}
+
+\subsection{Bayesian Optimization with Optuna}
+
+The \texttt{train\_model} function in \texttt{training.py} executes an Optuna study for 100 trials. Unlike Grid Search, Optuna uses the Tree-structured Parzen Estimator (TPE) algorithm to intelligently explore the hyperparameter space. Key tuned parameters include:
+\begin{itemize}
+    \item \textbf{Tree Structure:} \texttt{max\_depth} and \texttt{min\_child\_weight} to control tree complexity.
+    \item \textbf{Regularization:} Extensive $L1$ (\texttt{reg\_alpha}) and $L2$ (\texttt{reg\_lambda}) penalties applied on a logarithmic scale ($10^{-3}$ to $100$) to combat the small sample size.
+    \item \textbf{Custom Objectives:} The optimizer dynamically chooses between standard \texttt{reg:squarederror} and \texttt{reg:pseudohubererror}. Huber loss is highly resistant to extreme outliers, learning a robust gradient even when encountering massively over-valued players.
+\end{itemize}
+
+\subsection{Repeated Stratified K-Fold Cross Validation}
+
+To ensure the Optuna trial scores are highly reliable, the objective function evaluates models using \texttt{RepeatedStratifiedKFold} (5 splits, 3 repeats). Because Stratified K-Fold typically requires categorical targets, the continuous log-price is first binned into 10 quantiles using \texttt{pd.qcut}. This guarantees that every training and validation fold contains an equal distribution of cheap, mid-tier, and expensive players.
+
+\section{Model Evaluation and Financial Analysis Methodology}
+
+The final stage of the predictive pipeline, implemented in \texttt{evaluation.py}, focuses on rigorously assessing the model's accuracy and extracting actionable financial insights. This process ensures that the model is not only statistically sound but also useful for identifying transfer market anomalies.
+
+\subsection{Evaluation Workflow and Baseline Comparison}
+
+To provide a fair assessment, the data is partitioned into a 20\% unseen test set. The evaluation script follows a systematic workflow to benchmark the XGBoost model against a naive baseline:
+
+\begin{itemize}
+    \item \textbf{Baseline Construction:} A \texttt{DummyRegressor} is initialized to predict the mean value of the training set for every player in the test set. This serves as a "null hypothesis" to prove that the XGBoost model has learned meaningful patterns beyond simple averages.
+    \item \textbf{Scale Reversion:} Since the model was trained on log-transformed prices, all predictions and actual values are reverted to their original Euro scale using \texttt{np.expm1()} before calculating metrics. This ensures that errors are reported in millions of Euros, making them interpretable for stakeholders.
+    \item \textbf{Metrics Calculation:} The script computes RMSE (Root Mean Squared Error), MAE (Mean Absolute Error), and $R^2$ scores for both the baseline and the optimized XGBoost model.
+\end{itemize}
+
+\subsection{Financial Assessment and Classification Logic}
+
+Beyond statistical metrics, \texttt{evaluation.py} implements a financial classification engine to identify "hidden gems" or "overpriced" assets. By calculating the \textbf{Residual Error} ($\text{Actual Price} - \text{Predicted Price}$), the system assigns a \texttt{Valuation\_Status} to each player:
+
+\begin{itemize}
+    \item \textbf{Undervalued (\texttt{Predicted > Actual}):} Occurs when the model's algorithmic assessment of a player's statistical output suggests a value significantly higher than their current market price. These players are identified as high-priority transfer targets or "bargains."
+    \item \textbf{Overvalued (\texttt{Predicted < Actual}):} Indicates that a player's market price is inflated relative to their objective on-pitch performance. This may be due to "hype," brand value, or recent high-profile transfers that have not yet matched statistical consistency.
+    \item \textbf{Fair Valued:} Indicates that the market price is in close alignment with the model's prediction.
+\end{itemize}
+
+The complete dataset, including individual predictions and status labels, is exported to \texttt{player\_valuation\_results.csv} for further scout review.
+
+\section{Experimental Results and Performance Analysis}
+
+\subsection{Statistical Performance Benchmarking}
+
+To quantify the predictive power of the XGBoost model, its performance is benchmarked against the naive baseline on the 20\% test set. The following table (linked directly to \texttt{compare\_dummy\_xgb.csv}) summarizes the results:
+
+\begin{table}[H]
+    \centering
+    \caption{Performance Comparison: Baseline vs. XGBoost}
+    \label{tab:compare_models}
+    \begin{tabularx}{0.8\textwidth}{l >{\centering\arraybackslash}X >{\centering\arraybackslash}X}
+        \toprule \textbf{Metric} & \textbf{Dummy Regressor} & \textbf{XGBoost Regressor} \\\midrule
+        \csvreader[
+            late after line=\\,
+            respect underscore
+        ]{../data/outputs/compare_dummy_xgb.csv}{Metrics=\metrics,Dummy_Regressor=\dummy,XGB_Regressor=\xgb}{%
+            \metrics & \num[round-mode=places,round-precision=2]{\dummy} & \num[round-mode=places,round-precision=2]{\xgb}
+        }%
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+To fully contextualize the performance improvement provided by the XGBoost algorithm, three key regression metrics from the table above are evaluated:
+\begin{itemize}
+    \item \textbf{RMSE (Root Mean Squared Error):} Measures the average magnitude of prediction errors, heavily penalizing large discrepancies. The reduction from 22.31 to 11.01 demonstrates that XGBoost significantly limits extreme valuation errors compared to naive mean guessing.
+    \item \textbf{MAE (Mean Absolute Error):} Represents the average absolute difference between the predicted and actual transfer values. The MAE drops from 16.44 to 6.95 (million Euros), indicating that XGBoost's predictions are, on average, more than twice as accurate as the baseline.
+    \item \textbf{$R^2$ (Coefficient of Determination):} Indicates the proportion of the variance in the dependent variable that is predictable from the independent variables. The Dummy Regressor yields an $R^2$ near zero ($-0.09$), confirming it captures no underlying patterns. In contrast, the XGBoost model achieves an $R^2$ of 0.73, demonstrating that the engineered features successfully explain approximately 73\% of the variance in the complex football transfer market.
+\end{itemize}
+
+\subsection{Visual Verification and Diagnostic Charts}
+
+Three diagnostic charts are automatically generated by \texttt{charts.py} to visually validate the model:
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.7\textwidth]{../data/charts/actual_vs_predicted.png}
-    \caption{Actual vs.\ predicted transfer values. The dashed red line represents perfect fit ($y = x$).}
+    \caption{Actual vs.\ predicted transfer values. Points clustering closely to the dashed red line ($y=x$) indicate high accuracy.}
     \label{fig:actual_vs_predicted}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.75\textwidth]{../data/charts/feature_importance.png}
-    \caption{Feature importance in the final XGBoost model}
+    \caption{Feature importance ranking. Evaluates which engineered metrics hold the highest predictive power for player valuations.}
     \label{fig:feature_importance}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.7\textwidth]{../data/charts/residual_analysis.png}
-    \caption{Residual distribution. A near-symmetric distribution around zero indicates no systematic bias.}
+    \caption{Residual distribution histogram with KDE. A symmetric, normal-like distribution around the zero axis confirms the absence of systematic bias.}
     \label{fig:residuals}
 \end{figure}
 
-Each test-set player is classified as \textit{Undervalued}, \textit{Overvalued}, or \textit{Fair Valued}. Detailed results are exported to \texttt{player\_valuation\_results.xlsx}.
+\subsection{Financial Insight and Market Anomaly Detection}
+
+\begin{sloppypar}
+Detailed results for every player in the test set are exported to \texttt{player\_}\allowbreak\texttt{valuation\_}\allowbreak\texttt{results.}\allowbreak\texttt{csv}. This dataset serves as the primary tool for scouts to identify market discrepancies. 
+\end{sloppypar}
+
+The following table displays the most significant valuation discrepancies identified in the test set (Top 10 players by absolute error). This data is dynamically pulled from the exported results.
+
+\begin{table}[H]
+    \centering
+    \caption{Top 10 Valuation Anomalies (Actual vs. Predicted)}
+    \label{tab:valuation_anomalies}
+    \fontsize{10pt}{12pt}\selectfont
+    \begin{tabularx}{\textwidth}{l >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X l}
+        \toprule \textbf{Player} & \textbf{Actual (\pounds M)} & \textbf{Pred. (\pounds M)} & \textbf{Error} & \textbf{Status} \\\midrule
+        \csvreader[
+            late after line=\\,
+            respect underscore,
+            range=1-10
+        ]{../data/outputs/player_valuation_results.csv}{Player=\playername,Actual_Transfer_Value_M=\actualval,Predicted_Value_M=\predval,Residual_Error=\reserror,Valuation_Status=\vstatus}{%
+            \playername & \num[round-mode=places,round-precision=2]{\actualval} & \num[round-mode=places,round-precision=2]{\predval} & \num[round-mode=places,round-precision=2]{\reserror} & \vstatus
+        }%
+        \bottomrule
+    \end{tabularx}
+\end{table}
 
 
 % =============================================================
@@ -784,6 +918,7 @@ This project successfully completed all three required phases:
 % REFERENCES
 % =============================================================
 \begin{thebibliography}{9}
+\raggedright
 
 \bibitem{fbref}
 Sports Reference LLC, ``FBref.com --- Football Statistics and History,''
