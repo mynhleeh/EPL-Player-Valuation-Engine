@@ -5,6 +5,7 @@
 \usepackage[T5,T1]{fontenc}
 \usepackage[vietnamese,english]{babel}
 \usepackage{times}
+\usepackage{lmodern}
 
 % --- Page Layout ---
 \usepackage[top=2.5cm, bottom=2.5cm, left=3cm, right=2.5cm]{geometry}
@@ -156,8 +157,8 @@
 \textit{Team Members}\\[0.3cm]
 
 \begin{tabular}{l c c}
-\textbf{Full Name} & \textbf{Student ID} & \textbf{Assignment} \\[0.15cm]
-\hline\\[-0.2cm]
+\textbf{Full Name} & \textbf{Student ID} & \textbf{Assignment} \\ \hline
+\rule{0pt}{0.1cm} \\[-0.4cm]
 \foreignlanguage{vietnamese}{Lê Anh Minh} & B24DCCE180 & 3 \\[0.1cm]
 \foreignlanguage{vietnamese}{Ứng Trọng Trình} & B24DCCE271 & 2 \\[0.1cm]
 \foreignlanguage{vietnamese}{Nguyễn Đinh Anh Quân} & B24DCCE222 & 1 \\[0.3cm]
@@ -307,19 +308,19 @@ This section describes the key tools and libraries employed in the data crawling
 
 SeleniumBase is a browser automation framework built on top of Selenium WebDriver, designed for web testing and data extraction. Its most distinctive feature is the \textit{Undetected Chrome} (UC) mode, which modifies the ChromeDriver binary to avoid detection by anti-bot systems such as Cloudflare, DataDome, and PerimeterX. In UC mode, the browser fully emulates real user behavior---including TLS fingerprinting, JavaScript execution context, and navigator properties---making it indistinguishable from manual browsing.
 
-Alternative approaches were considered. The \texttt{requests} library combined with \texttt{BeautifulSoup} provides a lightweight solution for static HTML pages; however, FBref relies heavily on asynchronous JavaScript rendering, which these tools cannot handle. \texttt{Playwright} offers modern browser automation with multi-browser support, but lacks a built-in undetected mode, requiring additional configuration to bypass anti-bot mechanisms. \texttt{Scrapy}, while excellent for large-scale crawling, similarly cannot render JavaScript content natively. SeleniumBase was selected as the optimal trade-off between anti-detection capability and ease of use.
+Alternative approaches were considered. While the combination of the \texttt{requests} library and \texttt{BeautifulSoup} provides a lightweight solution for static HTML pages, FBref is not a static website and relies heavily on asynchronous JavaScript rendering, which these tools cannot handle. This necessitates the use of a browser automation tool like Selenium. However, standard Selenium cannot bypass the strict anti-bot mechanisms implemented by Cloudflare. Therefore, SeleniumBase, with its built-in undetected mode, is required to successfully render the page and extract data without being blocked.
 
 \subsection{Pandas}
 
 Pandas is the standard Python library for tabular data manipulation and analysis. In this phase, two specific functions are critical: \texttt{pd.read\_html()} parses HTML tables directly into DataFrame objects, automatically handling multi-level column headers and data type inference; \texttt{DataFrame.to\_sql()} writes processed data directly to an SQLite table with configurable conflict resolution strategies (\texttt{replace}, \texttt{append}).
 
-Compared to manual DOM parsing using \texttt{BeautifulSoup} or \texttt{lxml}, Pandas provides a significantly higher-level abstraction that reduces boilerplate code and error-prone index manipulation. An emerging alternative is \texttt{Polars}, a Rust-based DataFrame library offering superior performance; however, it lacks native HTML parsing support, making Pandas the more practical choice for this pipeline.
+Pandas provides a significantly higher-level abstraction compared to manual DOM parsing using \texttt{BeautifulSoup} or \texttt{lxml}, reducing boilerplate code and error-prone index manipulation.
 
 \subsection{thefuzz}
 
 The \texttt{thefuzz} library (formerly \texttt{fuzzywuzzy}) implements fuzzy string matching algorithms based on Levenshtein edit distance. The specific algorithm used in this project is \texttt{token\_sort\_ratio}, which operates by: (1)~tokenizing both input strings into words, (2)~sorting tokens alphabetically to eliminate word-order sensitivity, and (3)~computing the similarity ratio between the sorted sequences. This is particularly useful for matching player names that may appear in different orders across data sources (e.g., ``Mohamed Salah'' vs.\ ``Salah, Mohamed'').
 
-Python's standard library provides \texttt{difflib.SequenceMatcher} for similar tasks, but it is significantly slower and offers fewer algorithmic variants. A more performant alternative is \texttt{rapidfuzz}, a C++-based reimplementation with identical API but 5--10$\times$ faster execution; however, \texttt{thefuzz} was chosen for its broader community adoption and sufficient performance for the project's scale (approximately 400 player lookups).
+Python's standard library provides \texttt{difflib.SequenceMatcher} for similar tasks, but it is significantly slower and offers fewer algorithmic variants compared to \texttt{thefuzz}. The latter was selected for its robust implementation of string similarity metrics and sufficient performance for the project's scale, which involves approximately 400 player lookups.
 
 \subsection{SQLite}
 
@@ -331,45 +332,31 @@ Full client-server databases such as PostgreSQL or MySQL offer superior concurre
 
 \subsection{Collecting Match Statistics --- \texttt{crawl\_data.py}}
 
-\subsubsection{Anti-Bot Bypass Strategy}
+The data collection process from FBref is fully automated and orchestrated through a sequence of specific functions within \texttt{crawl\_data.py}, designed to handle anti-bot mechanisms and parse complex HTML structures.
 
-FBref employs anti-bot mechanisms and asynchronous JavaScript rendering, making simple \texttt{requests}-based approaches infeasible. The adopted solution uses SeleniumBase in \textit{Undetected Chrome} mode (\texttt{uc=True}), which fully emulates real browser behavior and bypasses automated detection systems such as Cloudflare.
-
-Additionally, \texttt{headless=True} mode runs the browser without a graphical interface, optimizing system resources during automated collection.
-
-\subsubsection{Extraction and Transformation Pipeline}
-
-The data processing pipeline after HTML retrieval follows these steps:
-
-\begin{enumerate}
-    \item \textbf{DOM Element Wait:} The \texttt{wait\_for\_element} function waits up to 20 seconds for the \texttt{\#stats\_standard} table to be fully rendered before extraction.
+\begin{itemize}
+    \item \textbf{\texttt{fetch\_stats(url)}:} This function initiates a SeleniumBase session using Undetected Chrome mode (\texttt{uc=True}) to bypass Cloudflare's anti-bot protections. It opens the target URL with an automatic reconnect strategy (\texttt{uc\_open\_with\_reconnect}) and utilizes \texttt{WebDriverWait} to pause execution for up to 20 seconds, ensuring that the DOM element containing the data (\texttt{div\_stats\_standard}) is fully rendered by the asynchronous JavaScript before extracting and returning the raw HTML source.
     
-    \item \textbf{Multi-Level Column Handling:} The original HTML table uses a two-row header structure. The system automatically iterates through each column, concatenating level-0 and level-1 names with semantic suffixes (\texttt{\_perf} for Performance group, \texttt{\_per90} for Per 90 Minutes group).
+    \item \textbf{\texttt{format\_stats(html)}:} Upon receiving the raw HTML, this function employs Pandas' \texttt{read\_html} to parse the specific table matching the ID \texttt{stats\_standard}. It addresses the complexity of the original table's multi-level headers by flattening them. The function iterates through the columns and appends semantic suffixes based on the top-level header group: \texttt{\_perf} for 'Performance' indicators and \texttt{\_per90} for 'Per 90 Minutes' metrics. It concludes by isolating the first 25 relevant statistical columns.
     
-    \item \textbf{Type Casting and Filtering:} Statistical columns are converted to numeric types via \texttt{pd.to\_numeric}. Players with total playing time $\leq 90$ minutes are removed to ensure statistical representativeness.
+    \item \textbf{\texttt{clean\_data(df)}:} This function prepares the raw data for analysis. It coerces all non-categorical columns to numeric formats using \texttt{pd.to\_numeric}. To ensure statistical significance, it filters out players with less than or equal to 90 minutes of total playing time (\texttt{Min} column). Finally, it removes duplicate player entries to maintain data integrity.
     
-    \item \textbf{Storage:} The resulting DataFrame is written to the \texttt{statistic} table in SQLite using the \texttt{replace} strategy (overwrite).
-\end{enumerate}
+    \item \textbf{\texttt{save\_to\_statistic\_table(df, path)}:} The final step in the pipeline connects to the SQLite database and writes the cleaned DataFrame into the \texttt{statistic} table using the \texttt{replace} strategy, effectively overwriting any previous data from older runs.
+\end{itemize}
 
 \subsection{Collecting Transfer Valuations --- \texttt{crawl\_transfer.py}}
 
-\subsubsection{Lookup and Matching Mechanism}
+The collection of transfer valuations from FootballTransfers operates as a secondary pass, reading the names from the newly created database and fetching their respective market values.
 
-For each player in the \texttt{statistic} table, the system performs a lookup on FootballTransfers:
-
-\begin{enumerate}
-    \item \textbf{URL Construction:} The player name is URL-encoded (\texttt{urllib.parse.quote}) and appended to the search endpoint.
+\begin{itemize}
+    \item \textbf{\texttt{all\_players(path)} \& \texttt{exist\_players(conn)}:} The script begins by querying the \texttt{statistic} table to retrieve the full list of players needing valuations. Concurrently, it checks the \texttt{price} table for already fetched players, calculating the difference to determine the pending queue. This allows the script to resume seamlessly if interrupted.
     
-    \item \textbf{Fuzzy String Matching:} Search results may return multiple players with similar names. The \texttt{token\_sort\_ratio} algorithm from the \texttt{thefuzz} library computes a similarity score between the query name and displayed names. Only results with similarity $> 80\%$ are accepted.
+    \item \textbf{\texttt{price\_table(conn)}:} This utility function ensures the database schema is correct by creating the \texttt{price} table (if it does not exist) with a \texttt{UNIQUE} constraint on the player's name, preventing duplicate records.
     
-    \item \textbf{Value Extraction:} The transfer value is extracted from the \texttt{span.player-tag} CSS element of the best match.
-    
-    \item \textbf{Special Character Handling:} Names containing special characters (e.g., apostrophes in O'Shea) are handled by escaping characters in the CSS selector.
-\end{enumerate}
+    \item \textbf{\texttt{fetch\_val(sb, name)}:} This core function takes a SeleniumBase instance and a player name. It constructs the search URL by properly encoding the player's name via \texttt{urllib.parse.quote}. After loading the search results and waiting for the \texttt{a.playerList-box} elements, it executes a fuzzy string matching algorithm. It iterates over each result box and computes a similarity score using \texttt{thefuzz.fuzz.token\_sort\_ratio} between the query name and the result's title. It tracks the highest-scoring match. If a perfect match (score of 100) is found, the loop terminates early. If the best match exceeds the 80\% confidence threshold, it extracts the transfer value string using the \texttt{span.player-tag} CSS selector.
+\end{itemize}
 
-\subsubsection{Incremental Write Strategy}
-
-Rather than accumulating all results in memory before writing, the system employs an \textit{incremental write} strategy: each player is written to the \texttt{price} table immediately after lookup. The first player uses \texttt{replace} mode (creates the table), while subsequent players use \texttt{append} mode. This approach ensures no data loss if the collection process is interrupted.
+The main execution flow operates the SeleniumBase browser in headless mode to conserve resources. It iterates through the pending player list, calling \texttt{fetch\_val} for each. Crucially, it employs an incremental write strategy: each retrieved price is immediately inserted into the database using an \texttt{INSERT OR IGNORE} SQL command, and the database connection explicitly commits the transaction every 25 records. This ensures minimal data loss in the event of a network timeout or unexpected error.
 
 \section{Results}
 
@@ -409,7 +396,7 @@ This section describes the key tools and libraries used to build the RESTful API
 
 Flask is a lightweight WSGI (Web Server Gateway Interface) micro-framework for Python, designed around the principle of minimal core with extensible architecture. Its key features include decorator-based route registration (\texttt{@app.route}), a built-in development server with auto-reload, and a context-local system (\texttt{flask.g}, \texttt{flask.request}) that provides per-request variable isolation without explicit parameter passing.
 
-Django, the most popular full-stack Python web framework, was considered as an alternative. However, Django's bundled ORM, template engine, and admin interface introduce significant overhead for a project requiring only a single JSON API endpoint. FastAPI, a modern asynchronous framework based on ASGI, offers automatic OpenAPI documentation and type validation through Pydantic models; however, its asynchronous architecture adds complexity that is unnecessary for a synchronous SQLite-backed API. Flask was selected for its simplicity, maturity, and extensive ecosystem.
+Flask was selected for this project due to its simplicity, maturity, and extensive ecosystem. Its micro-framework architecture provides the optimal balance of performance and ease of implementation for a synchronous SQLite-backed API, avoiding unnecessary overhead while maintaining high flexibility for data retrieval tasks.
 
 \subsection{Requests}
 
@@ -433,52 +420,49 @@ Third-party alternatives such as \texttt{Click} offer a more Pythonic decorator-
 
 \subsection{API Server --- \texttt{app.py}}
 
-\subsubsection{Architecture}
-
-The server is built on Flask with the following architectural features:
+The Flask API server provides a standardized interface for accessing the SQLite database. It manages its execution flow through specific request-handling and lifecycle functions.
 
 \begin{itemize}
-    \item \textbf{Per-Request Database Connection Management:} Each HTTP request receives a dedicated SQLite connection through the Flask context variable (\texttt{flask.g}). Connections are automatically closed after the request completes via the \texttt{@app.teardown\_appcontext} decorator, preventing connection leaks.
+    \item \textbf{\texttt{get\_db()}:} This function manages database connections on a per-request basis. It leverages the Flask application context (\texttt{flask.g}) to store the active SQLite connection object. If a connection does not exist for the current request context, it instantiates one, setting the \texttt{row\_factory} to \texttt{sqlite3.Row} to enable dictionary-like access to the returned records.
     
-    \item \textbf{Dynamic Query Building:} SQL queries are constructed dynamically based on input parameters. The \texttt{LIKE} operator with \texttt{\%} wildcards enables partial matching. Parameterized queries (\texttt{?} placeholders) are used to prevent SQL injection.
+    \item \textbf{\texttt{close\_connection(exception)}:} Decorated with \texttt{@app.teardown\_appcontext}, this function is automatically invoked by the Flask framework at the end of every HTTP request lifecycle. It retrieves the database connection from the context and safely closes it, strictly preventing resource leaks in a concurrent environment.
+    
+    \item \textbf{\texttt{search\_player\_stats()}:} This is the core endpoint function, mapped to \texttt{/api/search} using the HTTP GET method. The operational flow begins by extracting the \texttt{name} and \texttt{club} arguments from the HTTP request query parameters. If both are absent, it returns a 400 Bad Request response. Next, it dynamically constructs an SQL query. Starting with a base \texttt{SELECT * FROM statistic WHERE 1=1}, it conditionally appends \texttt{AND Player LIKE ?} or \texttt{AND Squad LIKE ?} clauses depending on the provided inputs, utilizing \texttt{\%} wildcards to support partial string matching. Parameterized inputs (\texttt{?}) are strictly enforced to prevent SQL injection vulnerabilities. Finally, the function executes the query via the context-managed database connection, converts the \texttt{sqlite3.Row} results into a list of Python dictionaries, and returns them serialized as a JSON response (or a 404 Not Found response if empty).
 \end{itemize}
-
-\subsubsection{Endpoint Specification}
-
-\begin{table}[H]
-\centering
-\caption{API endpoint specification}
-\label{tab:api_spec}
-\begin{tabularx}{\textwidth}{l l l X}
-\toprule
-\textbf{Method} & \textbf{Endpoint} & \textbf{Parameters} & \textbf{Description} \\
-\midrule
-GET & \texttt{/api/search} & \texttt{name}, \texttt{club} & Returns player stats as JSON \\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-Response codes include: \texttt{200 OK} (success), \texttt{400 Bad Request} (missing parameters), \texttt{404 Not Found} (no matching data).
 
 \subsection{Command-Line Lookup Client --- \texttt{lookup.py}}
 
-The client operates as follows:
+The client application offers a terminal-based interface to interact with the API, abstracting the HTTP protocol details from the user through specialized functions.
 
-\begin{enumerate}
-    \item Parses command-line arguments via \texttt{argparse} with two parameters: \texttt{--name} and \texttt{--club}.
-    \item Sends an HTTP GET request to the Flask server with query parameters.
-    \item Displays a summary table (name, squad, nationality, position, age) on the terminal via \texttt{tabulate}.
-    \item Exports full detailed statistics to a CSV file with an auto-generated filename based on the input parameters (e.g., \texttt{Salah\_Liverpool.csv}).
-\end{enumerate}
+\begin{itemize}
+    \item \textbf{Argument Parsing:} The main execution block initializes an \texttt{argparse.ArgumentParser} to accept \texttt{--name} and \texttt{--club} flags. It implements input validation, throwing a parser error if neither argument is supplied.
+    
+    \item \textbf{\texttt{fetch\_player\_data(name, club)}:} This function acts as the HTTP interface. It constructs a dictionary of non-empty parameters and utilizes the \texttt{requests.get} method to dispatch the query to the Flask API endpoint. If the HTTP response status is successful (200 OK), it parses and returns the JSON payload; otherwise, it handles the failure gracefully by returning \texttt{None}.
+    
+    \item \textbf{\texttt{display\_table(data)}:} To present the data in a human-readable format on the terminal, this function extracts key columns (Player, Squad, Nation, Pos, Age) from the complex JSON hierarchy. It passes this filtered list of lists to the \texttt{tabulate} library, specifying the \texttt{grid} format, which renders a neatly aligned ASCII table output.
+    
+    \item \textbf{\texttt{save\_to\_csv(data, args)}:} This function is responsible for exporting the complete, detailed dataset. It dynamically generates a filename by joining the provided search arguments and replacing spaces with underscores (e.g., \texttt{Mohamed\_Salah\_Liverpool.csv}). It then opens this file using \texttt{utf-8-sig} encoding. This specific encoding is crucial as it adds a UTF-8 Byte Order Mark (BOM) at the beginning of the file, ensuring that Microsoft Excel correctly recognizes and renders international characters (such as accented letters in player names or nation codes) without manual configuration. The function utilizes \texttt{csv.DictWriter} to automatically map JSON keys to headers and write all available statistical rows.
 
-Usage syntax:
-\begin{lstlisting}[language=bash, caption={Command-line lookup syntax}]
-python lookup.py --name "Salah" --club "Liverpool"
+    \item \textbf{Dynamic Querying:} The client is designed to be flexible; if only a name is provided, it searches for all players matching that name across all clubs. If only a club is provided, it retrieves the entire squad list. This logic is handled by the API backend but supported by the client's parameter filtering.
+\end{itemize}
+
+Usage syntax and sample output:
+\begin{lstlisting}[language=bash, caption={Command-line lookup usage and output}]
+$ python lookup.py --name "Salah" --club "Liverpool"
+ Summary of results: 
++---------------+-----------+----------+-------+-------+
+| NAME          | CLUB      | NATION   | POS   |   AGE |
++===============+===========+==========+=======+=======+
+| Mohamed Salah | Liverpool | eg EGY   | MF    |    32 |
++---------------+-----------+----------+-------+-------+
+Saved detailed stat
 \end{lstlisting}
 
 \section{Results}
 
-The API system runs reliably on port 5000, supporting simultaneous lookups by name and club. Result CSV files are saved to \texttt{data/lookup\_ans/}.
+The API system runs reliably on port 5000, supporting simultaneous lookups by name and club with sub-second response times. The client application successfully bridges the gap between raw JSON data and human-readable formats. 
+
+The summary table provided by \texttt{tabulate} allows for quick verification of the search results directly in the terminal, while the CSV export in \texttt{data/lookup\_ans/} provides a persistent record of the full 25 statistical indicators for deeper analysis. The use of \texttt{utf-8-sig} has been verified to maintain data integrity across different operating systems and spreadsheet software.
 
 
 % =============================================================
@@ -506,20 +490,17 @@ SQLite is used as the data source, with Pandas' \texttt{read\_sql()} function ex
 
 \section{Methodology}
 
-\subsection{Descriptive Statistics --- \texttt{squad\_analytics.py}}
+\subsection{Squad Analytics Pipeline --- \texttt{squad\_analytics.py}}
 
-The system queries all data from the \texttt{statistic} table, groups by the \texttt{Squad} column, and simultaneously computes three statistical measures for 18 numeric indicators using \texttt{groupby().agg()}. Results are exported to \texttt{squad\_stats\_summary.csv}.
+The evaluation of squad performance relies on aggregating individual player statistics into cohesive team-level indicators. This is achieved through three specialized analytical functions:
 
-\subsection{Squad Ranking --- Multivariate Weighted Scoring Model}
-
-To answer the question ``Which team has the best overall form?'', a Weighted Scoring Model is constructed based on the following logic:
-
-\begin{enumerate}
-    \item \textbf{Indicator Selection:} Seven representative metrics are chosen, covering three aspects: attacking (\texttt{G+A\_per90\_mean}, \texttt{G-PK\_per90\_mean}, \texttt{G+A\_perf\_median}), consistency (\texttt{Gls\_per90\_std}, \texttt{Min\_std}), and discipline (\texttt{CrdR\_perf\_mean}, \texttt{CrdY\_perf\_mean}).
+\begin{itemize}
+    \item \textbf{\texttt{calculate\_stats()}:} This function establishes a connection to the SQLite database and loads 18 specific numeric indicators along with the \texttt{Squad} column. It utilizes Pandas' \texttt{groupby('Squad')} to segment the dataset, and immediately applies the \texttt{agg()} function to simultaneously compute the median, mean, and standard deviation for every indicator. To preserve clarity, the resulting MultiIndex columns are flattened into single strings (e.g., \texttt{Age\_median}, \texttt{Gls\_perf\_std}).
     
-    \item \textbf{Direction Assignment:} Each metric is assigned a direction coefficient ($+1$ for positive indicators, $-1$ for negative ones). For example, goals are positive; cards are negative.
+    \item \textbf{\texttt{get\_max\_stats(df)}:} Operating on the aggregated data, this function identifies the leading team for every generated statistic. It sets the \texttt{Squad} column as the index and extracts the maximum values across all columns using the \texttt{max()} method, while simultaneously retrieving the names of the corresponding top squads using the \texttt{idxmax()} method. These paired results are then assembled into a new summary DataFrame.
     
-    \item \textbf{Min--Max Normalization:} Each metric is normalized to $[0, 1]$:
+    \item \textbf{\texttt{rank\_squads(data)}:} This function implements the Multivariate Weighted Scoring Model to definitively rank the teams. It first defines an evaluation configuration containing seven selected metrics (attacking efficiency, discipline, and stability), their directional properties ($+1$ for positive impacts like goals, $-1$ for negative impacts like cards), and their respective weight distributions. For each metric, the algorithm determines the empirical minimum and maximum values across all 20 teams. It applies a Min-Max normalization transformation to scale every value precisely into the $[0, 1]$ interval. The normalization formula dynamically adapts based on the metric's property:
+    
     \begin{equation}
         x_{\text{norm}} = \frac{x - x_{\min}}{x_{\max} - x_{\min}} \quad \text{(positive indicator)}
     \end{equation}
@@ -527,8 +508,8 @@ To answer the question ``Which team has the best overall form?'', a Weighted Sco
         x_{\text{norm}} = \frac{x_{\max} - x}{x_{\max} - x_{\min}} \quad \text{(negative indicator)}
     \end{equation}
     
-    \item \textbf{Composite Scoring:} Each normalized metric is multiplied by its weight (total weights $= 1.0$), summed, and scaled to a percentage.
-\end{enumerate}
+    Finally, the normalized values are multiplied by their assigned weights and summed horizontally for each squad. The final composite score is scaled by 100 to present a percentage-based evaluation, and the dataset is sorted in descending order to reveal the top-performing team.
+\end{itemize}
 
 \begin{table}[H]
 \centering
@@ -601,43 +582,17 @@ Classify outfield players into groups with similar playing characteristics based
 
 \subsection{Methodology --- \texttt{clusters.py}}
 
-\subsubsection{Data Preprocessing}
-
-Goalkeepers (\texttt{GK}) are excluded due to fundamentally different statistical profiles. Four features are selected and engineered:
+The execution flow for categorizing players into performance-based clusters is orchestrated through a sequence of data manipulation and machine learning functions.
 
 \begin{itemize}
-    \item \texttt{Gls\_per90}: Goals per 90 minutes --- represents scoring ability.
-    \item \texttt{Ast\_per90}: Assists per 90 minutes --- represents creative output.
-    \item \texttt{Agg\_per90}: Aggression index (yellow cards $+ 2 \times$ red cards) per 90 minutes --- represents discipline level.
-    \item \texttt{PK\_per90}: Penalties scored per 90 minutes --- reflects set-piece responsibility.
-\end{itemize}
-
-Data is normalized using \texttt{RobustScaler}, which uses the median and interquartile range (IQR) instead of mean and standard deviation, reducing the influence of outliers---common in football data.
-
-\subsubsection{Determining the Optimal Number of Clusters}
-
-Two complementary methods are used:
-
-\begin{itemize}
-    \item \textbf{Elbow Method:} Plots inertia (within-cluster sum of squares) against $k$ from 2 to 10. The ``elbow point''---where the rate of inertia decrease slows significantly---indicates the optimal $k$.
+    \item \textbf{\texttt{load\_stats()}:} This function connects to the SQLite database to retrieve raw match statistics. It immediately filters out Goalkeepers (\texttt{GK}), as their metrics are fundamentally incomparable to outfield players. The function then engineers two specialized features: an \texttt{Agg\_per90} index (combining yellow and red cards weighted by severity) and a \texttt{PK\_per90} ratio. It returns a refined dataset containing four core pillars of outfield play: goals, assists, aggression, and penalty duties. In the main execution block, this extracted dataset is passed through scikit-learn's \texttt{RobustScaler} to normalize the distributions while mitigating the impact of statistical outliers.
     
-    \item \textbf{Silhouette Score:} Measures how similar each data point is to its own cluster compared to neighboring clusters, with values in $[-1, 1]$. The highest average Silhouette score corresponds to the optimal $k$.
+    \item \textbf{\texttt{test\_clusters(data, max\_k)}:} To empirically determine the optimal number of clusters ($k$), this function iteratively fits a \texttt{KMeans} model for every $k$ from 2 up to 10. For each iteration, it utilizes the \texttt{k-means++} initialization strategy and runs 10 internal repetitions (\texttt{n\_init=10}) to avoid local optima. It records the model's \texttt{inertia\_} (for the Elbow method) and computes the \texttt{silhouette\_score} (measuring cluster cohesion and separation), storing these metrics in arrays.
+    
+    \item \textbf{\texttt{plot\_metrics(elbow, silhouettes, max\_k)}:} This visualization function takes the arrays generated during the testing phase and constructs a dual-subplot Matplotlib figure. It plots the Elbow chart (inertia vs. $k$) alongside the Silhouette chart (score vs. $k$), saving the combined high-resolution image to the \texttt{charts} directory. The script then pauses execution to prompt the user to inspect these charts and input the optimal $k$ value.
+    
+    \item \textbf{\texttt{reduce\_dim(df, dimen)} \& \texttt{plot\_clusters(df, kmeans, dimen)}:} Once the final K-Means model is trained using the user-provided $k$, the results must be visualized. Since the data resides in a 4-dimensional feature space, \texttt{reduce\_dim()} employs Principal Component Analysis (\texttt{PCA}) to mathematically project the data down to either 2 or 3 principal components (dimensions). \texttt{plot\_clusters()} then utilizes these reduced coordinates to generate 2D and 3D scatter plots, color-coding each data point according to its assigned cluster label (\texttt{kmeans.labels\_}), and saving the final visual archetypes to disk.
 \end{itemize}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.95\textwidth]{../data/charts/elbow_silhouettes.png}
-    \caption{Elbow chart (left) and Silhouette chart (right) for K-Means clustering}
-    \label{fig:elbow_silhouette}
-\end{figure}
-
-\subsubsection{K-Means Algorithm}
-
-After determining the optimal $k$, the K-Means++ algorithm is executed. K-Means++ improves centroid initialization by selecting initial centers that are spread far apart, accelerating convergence and reducing the risk of local optima. The parameter \texttt{n\_init=10} ensures the algorithm runs 10 times with different initial centroid sets, retaining the best result (lowest inertia).
-
-\subsubsection{Visualization with PCA}
-
-Principal Component Analysis (PCA) is applied to reduce dimensionality from 4 to 2 and 3 dimensions, enabling visual scatter plots:
 
 \begin{figure}[H]
     \centering
@@ -667,86 +622,17 @@ Build a regression model to predict player transfer values based on match statis
 
 \subsection{Methodology}
 
-\subsubsection{Data Loading and Merging --- \texttt{core/loader.py}}
-
-Data from the \texttt{statistic} and \texttt{price} tables in SQLite is combined via a \texttt{LEFT JOIN} on the \texttt{Player} field. Squad-level descriptive statistics (\texttt{squad\_stats\_summary.csv}) are then merged on the \texttt{Squad} field, providing team-level context for each player.
-
-\subsubsection{Feature Engineering --- \texttt{core/features.py}}
-
-The feature design process encompasses multiple groups:
-
-\begin{enumerate}
-    \item \textbf{Target Variable Processing:} Transfer values are extracted from strings (removing \texteuro{} and M symbols), converted to numeric type. Players without price data are dropped.
-    
-    \item \textbf{Position Encoding:} The \texttt{Pos} column (which may contain multiple comma-separated positions) is One-Hot encoded, creating binary variables for each position.
-    
-    \item \textbf{Player-Level Features:}
-    \begin{itemize}
-        \item $\texttt{Squad\_Status} = \texttt{Starts} / \texttt{MP}$ --- starting ratio.
-        \item $\texttt{Stamina\_Trust} = \texttt{Min} / \texttt{MP}$ --- average minutes per match.
-        \item $\texttt{NPG\_Efficiency} = (\texttt{Gls} - \texttt{PK}) / \texttt{Min}$ --- non-penalty goal efficiency.
-        \item $\texttt{Discipline\_Risk} = (\texttt{CrdY} + 2 \times \texttt{CrdR}) / \texttt{Min}$ --- discipline risk.
-        \item $\texttt{Assist\_Efficiency} = \texttt{Ast} / \texttt{Min}$ --- assist efficiency.
-    \end{itemize}
-    
-    \item \textbf{Squad-Level Features:}
-    \begin{itemize}
-        \item $\texttt{Min\_Z\_Score}$ --- Z-score of playing time relative to squad.
-        \item $\texttt{Age\_Diff\_Squad}$ --- age difference from squad average.
-        \item $\texttt{Offensive\_Share\_Proxy}$ --- individual offensive contribution ratio.
-        \item $\texttt{Squad\_Age\_Profile}$, $\texttt{Squad\_Rotation\_Index}$, $\texttt{Squad\_Discipline}$ --- tactical characteristics of the squad.
-    \end{itemize}
-\end{enumerate}
-
-\subsubsection{Model Training --- \texttt{core/training.py}}
-
-\textbf{Log Transformation:} The target variable (transfer value) follows a strongly right-skewed distribution. A $\log(1+x)$ transformation is applied to approximate normality, improving regression model performance.
-
-\textbf{XGBoost Algorithm:} eXtreme Gradient Boosting is an ensemble method based on gradient boosting that sequentially builds decision trees, where each new tree learns from the residuals of the preceding ensemble. Key regularization mechanisms include:
+The valuation system is implemented across a unified pipeline comprising feature engineering, hyperparameter tuning, model training, and performance evaluation.
 
 \begin{itemize}
-    \item \textbf{Monotone Constraints:} Enforce logical relationships (e.g., more goals $\Rightarrow$ higher value, more cards $\Rightarrow$ lower value).
-    \item \textbf{Interaction Constraints:} Limit interactions between feature groups (attacking, fitness, discipline) to prevent overfitting on meaningless combinations.
-    \item \textbf{L1/L2 Regularization:} \texttt{reg\_alpha} and \texttt{reg\_lambda} control model complexity.
+    \item \textbf{\texttt{prepare\_features()} (in \texttt{core/features.py}):} After loading and merging the \texttt{statistic}, \texttt{price}, and \texttt{squad\_stats} tables, this function handles the comprehensive data preparation. It cleans the target variable by stripping currency symbols and coercing strings to numerics. It implements One-Hot encoding for the multi-valued \texttt{Pos} column. Furthermore, it mathematically constructs advanced player-level metrics (e.g., \texttt{Squad\_Status}, \texttt{NPG\_Efficiency}) and squad-level context metrics (e.g., \texttt{Min\_Z\_Score}), transforming raw statistics into meaningful tactical features.
+    
+    \item \textbf{\texttt{train\_model()} (in \texttt{core/training.py}):} This function governs the XGBoost model training process, heavily utilizing the Optuna optimization framework. Because player transfer values are strongly right-skewed, the target variable undergoes a \texttt{np.log1p} logarithmic transformation prior to training to approximate a normal distribution. The function defines a search space encompassing optimization parameters (learning rate), structural parameters (tree depth), and regularization mechanisms ($L1$/$L2$ penalties) to prevent overfitting. It utilizes a Bayesian optimization strategy (Tree-structured Parzen Estimator) over a \texttt{RepeatedStratifiedKFold} cross-validation scheme to find the hyperparameter combination that minimizes the Root Mean Squared Error (RMSE).
+    
+    \item \textbf{\texttt{run\_evaluation()} (in \texttt{evaluation.py}):} Acting as the final validation stage, this function receives the best hyperparameters discovered by Optuna and trains the final \texttt{XGBRegressor}. To establish a baseline, it also trains a \texttt{DummyRegressor} that naively predicts the mean value. It calls a helper function, \textbf{\texttt{get\_metrics()}}, which mathematically reverses the logarithmic transformation using \texttt{np.expm1} before computing the final RMSE, Mean Absolute Error (MAE), and $R^2$ scores, saving the comparative results to an Excel file.
+    
+    \item \textbf{Valuation Export:} Within \texttt{run\_evaluation()}, the script calculates the residual error (actual minus predicted price) for every player in the test set. Using \texttt{np.select}, it categorizes each player as \textit{Undervalued}, \textit{Overvalued}, or \textit{Fair Valued} based on the direction of the error. It sorts the dataset by absolute error and exports this comprehensive financial assessment to \texttt{player\_valuation\_results.xlsx}. Finally, it invokes visualization functions from \texttt{core/charts.py} to generate scatter plots of actual vs. predicted values, feature importance rankings, and residual distributions.
 \end{itemize}
-
-\textbf{Hyperparameter Optimization with Optuna:} The Optuna framework uses the Tree-structured Parzen Estimator (TPE)---a Bayesian optimization method---to intelligently search the hyperparameter space. Cross-validation uses \texttt{RepeatedStratifiedKFold} ($k=5$, 3 repeats) with stratification by value quantiles (\texttt{qcut} with 10 bins), ensuring each fold has a similar transfer value distribution.
-
-\begin{table}[H]
-\centering
-\caption{Optuna hyperparameter search space}
-\label{tab:optuna_space}
-\begin{tabular}{l l l}
-\toprule
-\textbf{Group} & \textbf{Parameter} & \textbf{Range} \\
-\midrule
-Optimization     & learning\_rate       & $[10^{-3}, 0.5]$ (log) \\
-                 & objective            & squarederror / pseudohubererror \\
-\midrule
-Regularization   & min\_split\_loss     & $[10^{-4}, 10]$ (log) \\
-                 & reg\_alpha            & $[10^{-3}, 100]$ (log) \\
-                 & reg\_lambda           & $[10^{-8}, 100]$ (log) \\
-\midrule
-Tree Structure   & max\_depth            & $[2, 7]$ \\
-                 & min\_child\_weight    & $[1, 15]$ \\
-\midrule
-Sampling         & subsample            & $[0.1, 1.0]$ (log) \\
-                 & colsample\_bytree    & $[0.1, 1.0]$ (log) \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsubsection{Model Evaluation --- \texttt{evaluation.py}}
-
-The model is evaluated on the test set (20\% of data) with three metrics:
-
-\begin{itemize}
-    \item \textbf{RMSE} (Root Mean Squared Error): Measures average error, sensitive to large errors.
-    \item \textbf{MAE} (Mean Absolute Error): Measures average absolute error.
-    \item \textbf{R\textsuperscript{2}} (Coefficient of Determination): Proportion of variance explained by the model.
-\end{itemize}
-
-A Dummy Regressor (predicting the mean value) serves as a baseline for comparison, ensuring XGBoost learns genuine relationships in the data rather than just memorizing central tendencies.
 
 \subsection{Results}
 

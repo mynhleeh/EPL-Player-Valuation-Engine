@@ -23,13 +23,14 @@ def objective(trial, x: pd.DataFrame, y: pd.Series) -> float:
         'reg_alpha': trial.suggest_float('reg_alpha', 1e-3, 100.0, log=True),
         'reg_lambda': trial.suggest_float('reg_lambda', 1e-8, 100.0, log=True),
 
-        'max_depth': trial.suggest_int('max_depth', 2, 7),
-        'min_child_weight': trial.suggest_int('min_child_weight', 1, 15),
+        'max_depth': trial.suggest_int('max_depth', 3, 10),
+        'min_child_weight': trial.suggest_int('min_child_weight', 1, 20),
         
-        'subsample': trial.suggest_float('subsample', 0.1, 1.0, log=True),
-        'colsample_bytree': trial.suggest_float('colsample_bytree', 0.1, 1.0, log=True),
+        'subsample': trial.suggest_float('subsample', 0.5, 1.0),
+        'colsample_bytree': trial.suggest_float('colsample_bytree', 0.4, 1.0),
+        'colsample_bylevel': trial.suggest_float('colsample_bylevel', 0.4, 1.0),
         
-        'max_bin': trial.suggest_categorical('max_bin', [32, 64, 128]),
+        'max_bin': trial.suggest_categorical('max_bin', [64, 128, 256]),
         'max_cat_to_onehot': trial.suggest_int('max_cat_to_onehot', 2, 25),
         'max_cat_threshold': trial.suggest_int('max_cat_threshold', 1, 64),
     }
