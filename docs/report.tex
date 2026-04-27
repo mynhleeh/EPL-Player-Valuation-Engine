@@ -435,7 +435,7 @@ The Flask API server provides a standardized interface for accessing the SQLite 
 The client application offers a terminal-based interface to interact with the API, abstracting the HTTP protocol details from the user through specialized functions.
 
 \begin{itemize}
-    \item \textbf{Argument Parsing:} The main execution block initializes an \texttt{argparse.}\allowbreak\texttt{Argument}\allowbreak\texttt{Parser} to accept \texttt{--name} and \texttt{--club} flags. It implements input validation, throwing a parser error if neither argument is supplied.
+    \item \textbf{Argument Parsing:} The script utilizes an \texttt{argparse.}\allowbreak\texttt{Argument}\allowbreak\texttt{Parser} to handle the \texttt{--name} and \texttt{--club} flags, ensuring that at least one argument is provided.
     
     \item \textbf{\texttt{fetch\_}\allowbreak\texttt{player\_}\allowbreak\texttt{data(name, club)}:} This function acts as the HTTP interface. It constructs a dictionary of non-empty parameters and utilizes the \texttt{requests.get} method to dispatch the query to the Flask API endpoint. If the HTTP response status is successful (200 OK), it parses and returns the JSON payload; otherwise, it handles the failure gracefully by returning \texttt{None}.
     
