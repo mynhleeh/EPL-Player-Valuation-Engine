@@ -9,50 +9,9 @@
 
 ## 📌 Executive Summary
 
-This repository contains the final project for the **Python Programming** course at the **Posts and Telecommunications Institute of Technology (PTIT)**. It is a comprehensive, end-to-end data engineering and machine learning system designed to extract, process, serve, and analyze football statistics from the 2024-2025 Premier League season.
+This repository contains an end-to-end Data Engineering and Machine Learning pipeline designed to extract, process, serve, and analyze football statistics from the 2024-2025 Premier League season. 
 
-The system bridges the gap between raw web data and actionable analytical insights through an automated ETL pipeline, a lightweight RESTful API, and an advanced predictive/clustering engine utilizing state-of-the-art machine learning frameworks.
-
-
-## ⚙️ System Architecture & Core Modules
-
-The project is strictly modularized into three distinct subsystems to ensure separation of concerns, scalability, and maintainability.
-
-### Part 1: Automated Data Ingestion (ETL Pipeline)
-An intelligent scraping engine that bypasses standard bot protections to fetch real-time player statistics from FBref.
-* **Extraction**: Utilizes `SeleniumBase` (Undetected ChromeDriver) to reliably fetch dynamic HTML.
-* **Transformation**: Employs `pandas` to clean, normalize, and format multi-level HTML tables, converting strings to numeric types and filtering out invalid entries (e.g., players with <90 minutes played).
-* **Loading**: Persists the processed dataset into a robust `SQLite` database (`database.db`).
-
-### Part 2: RESTful Application Interface
-A lightweight backend service designed for rapid data retrieval and lookup.
-* **Framework**: Built with `Flask`.
-* **Endpoints**: Exposes a `/api/search` endpoint allowing precise filtering of player statistics via query parameters (`name` and `club`).
-* **Resource Management**: Implements connection pooling and per-request database teardown to ensure thread safety and optimal memory usage.
-
-### Part 3: Advanced Analytics & Machine Learning (Core Technical Achievement)
-The analytical heart of the system, implementing both unsupervised and supervised machine learning methodologies to extract deep insights from the player data.
-* **Unsupervised Learning (Clustering)**: 
-  * Implements `KMeans` clustering to group players based on performance metrics (Goals, Assists, Aggression, Penalty Kicks per 90).
-  * Features mathematically rigorous cluster evaluation using **Elbow Methods** and **Silhouette Scores**.
-  * Utilizes `PCA` (Principal Component Analysis) for dimensionality reduction, outputting sophisticated 2D and 3D visual representations via `matplotlib`.
-* **Supervised Learning (Predictive Modeling)**:
-  * Deploys `XGBRegressor` for high-performance regression tasks.
-  * Implements Bayesian hyperparameter optimization via `Optuna`, continuously logging trial metrics to a database.
-  * Utilizes `RepeatedStratifiedKFold` cross-validation with feature binning to ensure robust model evaluation and prevent overfitting.
-
-
-## 🛠️ Technology Stack
-
-| Domain | Technologies Used |
-| :--- | :--- |
-| **Data Extraction** | `seleniumbase`, `lxml`, `beautifulsoup4`, `requests` |
-| **Data Manipulation** | `pandas`, `numpy`, `openpyxl` |
-| **Backend API** | `Flask`, `SQLAlchemy`, `sqlite3` |
-| **Machine Learning** | `scikit-learn`, `xgboost`, `thefuzz` |
-| **MLOps & Tuning** | `optuna` |
-| **Data Visualization** | `matplotlib`, `seaborn`, `tabulate` |
-
+**Business Objective ("Moneyball" Approach):** Beyond standard data ingestion, the core impact of this project lies in its **Player Valuation Engine**. By leveraging state-of-the-art predictive modeling (XGBoost), the system accurately predicts a player's market transfer value based on their pitch performance metrics. It then computes the residual errors to automatically flag players as **Undervalued**, **Overvalued**, or **Fair Valued**—providing actionable intelligence for football scouting and recruitment strategy.
 
 ## 📂 Project Structure
 
@@ -80,6 +39,62 @@ The analytical heart of the system, implementing both unsupervised and supervise
 ├── requirements.txt            # Dependency manifest
 └── README.md                   # System documentation
 ```
+
+## ⚙️ System Architecture & Core Modules
+
+The project is strictly modularized into three distinct subsystems to ensure separation of concerns, scalability, and maintainability.
+
+### Part 1: Automated Data Ingestion (ETL Pipeline)
+An intelligent scraping engine that bypasses standard bot protections to fetch real-time player statistics from FBref.
+* **Extraction**: Utilizes `SeleniumBase` (Undetected ChromeDriver) to reliably fetch dynamic HTML.
+* **Transformation**: Employs `pandas` to clean, normalize, and format multi-level HTML tables, converting strings to numeric types and filtering out invalid entries (e.g., players with <90 minutes played).
+* **Loading**: Persists the processed dataset into a robust `SQLite` database (`database.db`).
+
+### Part 2: RESTful Application Interface
+A lightweight backend service designed for rapid data retrieval and lookup.
+* **Framework**: Built with `Flask`.
+* **Endpoints**: Exposes a `/api/search` endpoint allowing precise filtering of player statistics via query parameters (`name` and `club`).
+* **Resource Management**: Implements connection pooling and per-request database teardown to ensure thread safety and optimal memory usage.
+
+### Part 3: Advanced Analytics & Machine Learning (Core Technical Achievement)
+The analytical heart of the system, implementing unsupervised clustering for player profiling and supervised regression for transfer market valuation.
+
+* **Unsupervised Learning (Player Profiling):** * Implements `KMeans` clustering to group players based on engineered metrics (`Aggression_per90`, `Goals_per90`, etc.), utilizing `RobustScaler` to handle outliers.
+  * Features mathematically rigorous cluster evaluation using **Elbow Methods** and **Silhouette Scores**.
+  * Utilizes `PCA` (Principal Component Analysis) for dimensionality reduction, mapping high-dimensional player stats into interpretable 2D and 3D topological spaces.
+
+* **Supervised Learning (Transfer Value Prediction):**
+  * **Target Transformation:** Employs Log-Transformation (`np.log1p`) on the highly skewed transfer value target variable to stabilize variance, reverting via `np.expm1` for final evaluation.
+  * **Advanced Cross-Validation:** Deploys a sophisticated `RepeatedStratifiedKFold` approach on continuous data by binning the target variable (`pd.qcut`), ensuring robust model evaluation against highly imbalanced transfer market distributions.
+  * **Optimization & Modeling:** Deploys `XGBRegressor` with Bayesian hyperparameter optimization via `Optuna` (logging metrics to SQLite). 
+  * **Evaluation & Impact:** Compares the final model against a `DummyRegressor` baseline using RMSE, MAE, and R² scores. Outputs a complete `.csv` report categorizing each player's market status (Undervalued vs. Overvalued) through rigorous residual analysis.
+
+## 🛠️ Technology Stack
+
+| Domain | Technologies Used |
+| :--- | :--- |
+| **Data Extraction** | `seleniumbase`, `lxml`, `beautifulsoup4`, `requests` |
+| **Data Manipulation** | `pandas`, `numpy`, `openpyxl` |
+| **Backend API** | `Flask`, `SQLAlchemy`, `sqlite3` |
+| **Machine Learning** | `scikit-learn`, `xgboost`, `thefuzz` |
+| **MLOps & Tuning** | `optuna` |
+| **Data Visualization** | `matplotlib`, `seaborn`, `tabulate` |
+
+### Clustering & Dimensionality Reduction (PCA)
+<p align="center">
+  <img src="data/charts/kmeans_2d.png" width="80%" alt="2D PCA Clusters">
+</p>
+
+<p align="center">
+  <img src="data/charts/elbow_silhouettes.png" width="100%" alt="Elbow and Silhouette Metrics">
+</p>
+
+
+### Predictive Valuation & Residual Analysis
+<p align="center">
+  <img src="data/charts/actual_vs_predicted.png" width="50%" alt="Actual vs Predicted Values">
+  <img src="data/charts/residual_analysis.png" width="45%" alt="Residual Error Analysis">
+</p>
 
 ## 🚀 Installation & Setup
 
