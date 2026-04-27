@@ -1,55 +1,55 @@
 Stat,Squad,Max_Value
 Age_median,Fulham,27.0
-Age_mean,West Ham United,27.62
-Age_std,Manchester Utd,5.2
+Age_mean,West Ham United,27.625
+Age_std,Manchester Utd,5.196626416087112
 MP_median,Nottingham Forest,34.0
-MP_mean,Nottingham Forest,27.33
-MP_std,Brentford,12.67
+MP_mean,Nottingham Forest,27.333333333333332
+MP_std,Brentford,12.666894506950646
 Starts_median,Nottingham Forest,23.0
-Starts_mean,Nottingham Forest,19.67
-Starts_std,Brentford,14.66
+Starts_mean,Nottingham Forest,19.666666666666668
+Starts_std,Brentford,14.664502004760305
 Min_median,Nottingham Forest,1963.0
-Min_mean,Nottingham Forest,1769.95
-Min_std,Brentford,1238.94
+Min_mean,Nottingham Forest,1769.952380952381
+Min_std,Brentford,1238.9361621378293
 90s_median,Nottingham Forest,21.8
-90s_mean,Nottingham Forest,19.67
-90s_std,Brentford,13.76
+90s_mean,Nottingham Forest,19.67142857142857
+90s_std,Brentford,13.763336704064068
 Gls_perf_median,Arsenal,2.5
-Gls_perf_mean,Liverpool,3.86
-Gls_perf_std,Liverpool,6.66
+Gls_perf_mean,Liverpool,3.8636363636363638
+Gls_perf_std,Liverpool,6.664014624015384
 Ast_perf_median,Arsenal,2.0
-Ast_perf_mean,Liverpool,2.95
-Ast_perf_std,Liverpool,3.92
+Ast_perf_mean,Liverpool,2.9545454545454546
+Ast_perf_std,Liverpool,3.92157976825512
 G+A_perf_median,Arsenal,3.5
-G+A_perf_mean,Liverpool,6.82
-G+A_perf_std,Liverpool,10.36
+G+A_perf_mean,Liverpool,6.818181818181818
+G+A_perf_std,Liverpool,10.358508642594323
 G-PK_perf_median,Arsenal,2.0
-G-PK_perf_mean,Liverpool,3.45
-G-PK_perf_std,Brentford,5.28
+G-PK_perf_mean,Liverpool,3.4545454545454546
+G-PK_perf_std,Brentford,5.284134548067254
 PK_perf_median,Arsenal,0.0
-PK_perf_mean,Liverpool,0.41
-PK_perf_std,Liverpool,1.92
+PK_perf_mean,Liverpool,0.4090909090909091
+PK_perf_std,Liverpool,1.9188064472004938
 PKatt_perf_median,Arsenal,0.0
-PKatt_perf_mean,Liverpool,0.41
-PKatt_perf_std,Liverpool,1.92
+PKatt_perf_mean,Liverpool,0.4090909090909091
+PKatt_perf_std,Liverpool,1.9188064472004938
 CrdY_perf_median,Everton,4.0
-CrdY_perf_mean,Nottingham Forest,4.19
-CrdY_perf_std,Nottingham Forest,3.52
+CrdY_perf_mean,Nottingham Forest,4.190476190476191
+CrdY_perf_std,Nottingham Forest,3.5159500511106185
 CrdR_perf_median,Arsenal,0.0
-CrdR_perf_mean,Arsenal,0.27
-CrdR_perf_std,Arsenal,0.55
-Gls_per90_median,Arsenal,0.12
-Gls_per90_mean,Manchester City,0.18
-Gls_per90_std,Aston Villa,0.27
-Ast_per90_median,Liverpool,0.14
-Ast_per90_mean,Liverpool,0.14
-Ast_per90_std,Crystal Palace,0.15
+CrdR_perf_mean,Arsenal,0.2727272727272727
+CrdR_perf_std,Arsenal,0.5504818825631803
+Gls_per90_median,Arsenal,0.125
+Gls_per90_mean,Manchester City,0.17560000000000003
+Gls_per90_std,Aston Villa,0.26922188484672505
+Ast_per90_median,Liverpool,0.135
+Ast_per90_mean,Liverpool,0.14181818181818182
+Ast_per90_std,Crystal Palace,0.14980463467940028
 G+A_per90_median,Arsenal,0.31
-G+A_per90_mean,Arsenal,0.31
-G+A_per90_std,Liverpool,0.33
+G+A_per90_mean,Arsenal,0.3063636363636364
+G+A_per90_std,Liverpool,0.3340052751223007
 G-PK_per90_median,Arsenal,0.12
-G-PK_per90_mean,Arsenal,0.17
-G-PK_per90_std,Aston Villa,0.26
+G-PK_per90_mean,Manchester City,0.1716
+G-PK_per90_std,Aston Villa,0.26141859639222786
 G+A-PK_per90_median,Arsenal,0.31
-G+A-PK_per90_mean,Arsenal,0.3
-G+A-PK_per90_std,Aston Villa,0.3
+G+A-PK_per90_mean,Arsenal,0.3022727272727273
+G+A-PK_per90_std,Liverpool,0.3042658469623326
