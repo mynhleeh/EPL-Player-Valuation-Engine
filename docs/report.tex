@@ -360,7 +360,7 @@ The collection of transfer valuations from FootballTransfers operates as a secon
     
     \item \textbf{\texttt{price\_table(conn)}:} This utility function ensures the database schema is correct by creating the \texttt{price} table (if it does not exist) with a \texttt{UNIQUE} constraint on the player's name, preventing duplicate records.
     
-    \item \textbf{\texttt{fetch\_val(sb, name)}:} This core function takes a SeleniumBase instance and a player name. It constructs the search URL by properly encoding the player's name via \texttt{urllib.parse.quote}. After loading the search results and waiting for the \texttt{a.playerList-box} elements, it executes a fuzzy string matching algorithm. It iterates over each result box and computes a similarity score using \texttt{thefuzz.fuzz.token\_sort\_ratio} between the query name and the result's title. It tracks the highest-scoring match. If a perfect match (score of 100) is found, the loop terminates early. If the best match exceeds the 80\% confidence threshold, it extracts the transfer value string using the \texttt{span.player-tag} CSS selector.
+    \item \textbf{\texttt{fetch\_val(sb, name)}:} This core function takes a SeleniumBase instance and a player name. It constructs the search URL by properly encoding the player's name via \texttt{urllib.parse.quote}. After loading the search results and waiting for the \texttt{a.playerList-box} elements, it executes a fuzzy string matching algorithm. It iterates over each result box and computes a similarity score using \texttt{thefuzz.fuzz.token\_sort\_ratio} between the query name and the result's title. It tracks the highest-scoring match. If a perfect match (score of 100) is found, the loop terminates early. If the best match exceeds the 80\% confidence threshold, it extracts the transfer value string using the \texttt{span.player-tag} CSS selector. The selection of this 80\% threshold is a deliberate compromise between precision and recall: a lower threshold might lead to incorrect price assignments for players with similar names, while a significantly higher threshold could cause the system to miss valid matches due to minor spelling variations or naming conventions across data sources.
 \end{itemize}
 
 The main execution flow operates the SeleniumBase browser in headless mode to conserve resources. It iterates through the pending player list, calling \texttt{fetch\_val} for each. Crucially, it employs an incremental write strategy: each retrieved price is immediately inserted into the database using an \texttt{INSERT OR IGNORE} SQL command, and the database connection explicitly commits the transaction every 25 records. This ensures minimal data loss in the event of a network timeout or unexpected error.
@@ -670,6 +670,9 @@ Creative Playmakers & Safe play, regulating match tempo & 0.05 & 0.06 & 0.19 \\
 
 Assigning names based on average statistical indicators transforms dry numerical labels into intuitive football concepts, providing robust support for scouting and tactical analysis.
 
+\subsection{Dimensionality Reduction with PCA}
+
+To facilitate the visualization of high-dimensional player data (25 statistical features) onto 2D and 3D planes, the system employs Principal Component Analysis (PCA).
 
 \begin{figure}[H]
     \centering
@@ -688,7 +691,7 @@ Assigning names based on average statistical indicators transforms dry numerical
     \label{fig:kmeans_viz}
 \end{figure}
 
-PCA works by finding principal components---linear combinations of original features that explain the largest variance in the data. The first two principal components typically capture the majority of information, enabling approximate cluster structure representation on a plane.
+The mechanism of PCA is centered on the analysis of the covariance matrix of the 25 original player features. By calculating the eigenvalues and eigenvectors of this matrix, the algorithm identifies the directions (Principal Components) along which the data exhibits the highest variance. These components are linear combinations of the original features, allowing the system to project the player profiles from a 25-dimensional space into a lower-dimensional representation while preserving the maximum possible amount of information and underlying cluster structure. This process effectively removes noise and redundancy, highlighting the most significant performance variations that distinguish different player roles.
 
 
 % =============================================================
@@ -775,7 +778,7 @@ The \texttt{train\_model} function in \texttt{training.py} executes an Optuna st
 \begin{itemize}
     \item \textbf{Tree Structure:} \texttt{max\_depth} and \texttt{min\_child\_weight} to control tree complexity.
     \item \textbf{Regularization:} Extensive $L1$ (\texttt{reg\_alpha}) and $L2$ (\texttt{reg\_lambda}) penalties applied on a logarithmic scale ($10^{-3}$ to $100$) to combat the small sample size.
-    \item \textbf{Custom Objectives:} The optimizer dynamically chooses between standard \texttt{reg:squarederror} and \texttt{reg:pseudohubererror}. Huber loss is highly resistant to extreme outliers, learning a robust gradient even when encountering massively over-valued players.
+    \item \textbf{Custom Objectives:} The optimizer dynamically chooses between standard \texttt{reg:squarederror} and \texttt{reg:pseudohubererror}. The Pseudo-Huber Error objective function acts as a smooth approximation of the Huber loss, combining the advantages of both Squared Error (MSE) and Absolute Error (MAE). For small errors, it behaves quadratically like MSE, ensuring stability and fast convergence. However, for large errors (outliers), it becomes linear like MAE, preventing the model from being disproportionately influenced by extreme valuation anomalies---such as ``superstar'' prices or outliers that do not strictly follow the statistical performance trends. This outlier resistance is crucial in player valuation, where market sentiment can often produce prices far detached from objective match statistics.
 \end{itemize}
 
 \subsection{Repeated Stratified K-Fold Cross Validation}
