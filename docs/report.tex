@@ -638,28 +638,38 @@ Matplotlib is the foundational visualization library for Python, providing granu
 
 While interactive libraries like \texttt{Plotly} are useful for web dashboards, Matplotlib and Seaborn are superior for generating high-resolution, publication-quality static images for LaTeX reports. They offer better integration with the scientific Python stack and more precise control over typography and layout.
 
-\subsection{Methodology}
+\subsection{K-Means Clustering Results and Player Profiling}
 
-The execution flow for categorizing players into performance-based clusters is orchestrated through a sequence of data manipulation and machine learning functions.
-
-\begin{itemize}
-    \item \textbf{\texttt{load\_stats()}:} This function connects to the SQLite database to retrieve raw match statistics. It immediately filters out Goalkeepers (\texttt{GK}), as their metrics are fundamentally incomparable to outfield players. The function then engineers two specialized features: an \texttt{Agg\_per90} index (combining yellow and red cards weighted by severity) and a \texttt{PK\_per90} ratio. It returns a refined dataset containing four core pillars of outfield play: goals, assists, aggression, and penalty duties. In the main execution block, this extracted dataset is passed through scikit-learn's \texttt{RobustScaler} to normalize the distributions while mitigating the impact of statistical outliers.
-    
-    \item \textbf{\texttt{test\_}\allowbreak\texttt{clusters(}\allowbreak\texttt{data, }\allowbreak\texttt{max\_}\allowbreak\texttt{k)}:}\\ To empirically determine the optimal number of clusters ($k$), this function iteratively fits a \texttt{KMeans} model for every $k$ from 2 up to 10. For each iteration, it utilizes the \texttt{k-means++} initialization strategy and runs 10 internal repetitions (\texttt{n\_init=10}) to avoid local optima. It records the model's \texttt{inertia\_} (for the Elbow method) and computes the \texttt{silhouette\_score} (measuring cluster cohesion and separation), storing these metrics in arrays.
-    
-    \item \textbf{\texttt{plot\_}\allowbreak\texttt{metrics(}\allowbreak\texttt{elbow, }\allowbreak\texttt{silhouettes, }\allowbreak\texttt{max\_}\allowbreak\texttt{k)}:}\\ This visualization function takes the arrays generated during the testing phase and constructs a dual-subplot Matplotlib figure. It plots the Elbow chart (inertia vs. $k$) alongside the Silhouette chart (score vs. $k$), saving the combined high-resolution image to the \texttt{charts} directory. The script then pauses execution to prompt the user to inspect these charts and input the optimal $k$ value.
-    
-    \item \textbf{\texttt{reduce\_}\allowbreak\texttt{dim(}\allowbreak\texttt{df, }\allowbreak\texttt{dimen)} \& \texttt{plot\_}\allowbreak\texttt{clusters(}\allowbreak\texttt{df, }\allowbreak\texttt{kmeans, }\allowbreak\texttt{dimen)}:}\\ Once the final K-Means model is trained using the user-provided $k$, the results must be visualized. Since the data resides in a 4-dimensional feature space, \texttt{reduce\_dim()} employs Principal Component Analysis (\texttt{PCA}) to mathematically project the data down to either 2 or 3 principal components (dimensions). \texttt{plot\_clusters()} then utilizes these reduced coordinates to generate 2D and 3D scatter plots, color-coding each data point according to its assigned cluster label (\texttt{kmeans.labels\_}), and saving the final visual archetypes to disk.
-\end{itemize}
+Based on the execution of the K-Means algorithm, we analyzed the evaluation metrics to determine the optimal structure for the data. Rather than requiring manual user intervention, the system identifies optimal characteristics directly from the diagnostic charts (Figure~\ref{fig:elbow_silhouettes}).
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{../data/charts/elbow_silhouettes.png}
+    \includegraphics[width=0.85\textwidth]{../data/charts/elbow_silhouettes.png}
     \caption{Elbow and Silhouette charts for determining the optimal number of clusters}
     \label{fig:elbow_silhouettes}
 \end{figure}
 
-As described in the execution flow, after the evaluation charts (Figure~\ref{fig:elbow_silhouettes}) are generated, the script pauses its execution. The user must visually inspect these metrics to determine the optimal number of clusters and manually input this $k$ value via the terminal console. Once the user provides the input, the script continues with the final K-Means clustering phase and subsequently generates the PCA-reduced scatter plots.
+Specifically, the Elbow chart (Inertia) exhibits a distinct ``kink'' at the value $K = 3$, where the rate of decrease in the objective function slows down significantly. Simultaneously, the Silhouette score reaches its maximum at $K = 3$, indicating that the clusters are best separated and internally cohesive at this point. Therefore, $K = 3$ is selected for the final clustering of the entire player dataset.
+
+After performing the clustering, we extracted the mean characteristics of each group to build player profiles. These results are summarized in Table~\ref{tab:cluster_profiling}.
+
+\begin{table}[H]
+\centering
+\caption{Summary of player cluster characteristics (Profiling)}
+\label{tab:cluster_profiling}
+\begin{tabularx}{\textwidth}{l >{\raggedright\arraybackslash}X c c c}
+\toprule
+\textbf{Cluster Name} & \textbf{Technical Characteristics} & \textbf{Gls\_per90} & \textbf{Ast\_per90} & \textbf{Agg\_per90} \\
+\midrule
+Defensive Anchors  & Aggressive playstyle, focused on defense & 0.06 & 0.05 & 0.72 \\
+Lethal Finishers   & Outstanding goal and assist efficiency & 0.38 & 0.21 & 0.17 \\
+Creative Playmakers & Safe play, regulating match tempo & 0.05 & 0.06 & 0.19 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Assigning names based on average statistical indicators transforms dry numerical labels into intuitive football concepts, providing robust support for scouting and tactical analysis.
+
 
 \begin{figure}[H]
     \centering
@@ -878,6 +888,9 @@ The following table displays the most significant valuation discrepancies identi
     \end{tabularx}
 \end{table}
 
+Beyond the quantitative rankings, a qualitative analysis of Table~\ref{tab:valuation_anomalies} reveals compelling discrepancies between mathematical predictions and real-world transfer valuations. \textbf{Leny Yoro} serves as a primary example of an ``Overvalued'' player, with an actual market price nearly 38 million Euros higher than predicted. This gap likely stems from the significant ``premium'' the market commands for young, high-potential defenders—qualities that raw statistical output may not yet fully reflect. Conversely, \textbf{Nicolas Jackson} is categorized as ``Undervalued'', with a predicted valuation of 92.6 million Euros against a market price of only 54.4 million Euros. The model recognizes Jackson's immense volume of goal contributions per 90 minutes as a high-value asset, whereas his actual value may be dampened by subjective perceptions of finishing consistency. These discrepancies demonstrate the XGBoost model's ability to identify ``hidden gems'' based on objective performance data, isolated from market sentiment or brand hype.
+
+
 
 % =============================================================
 % CHAPTER 6: CONCLUSION
@@ -929,7 +942,7 @@ The system has been developed and tested under the following environment:
 \begin{itemize}
     \item \textbf{Operating System:} Windows 10/11, macOS, or Linux.
     \item \textbf{Python Version:} Python 3.10 or higher.
-    \item \textbf{Browser:} Google Chrome (required for SeleniumBase Undetected Chrome mode).
+    \item \begin{sloppypar} \textbf{Browser:} Google Chrome (required for SeleniumBase Undetected Chrome mode). \end{sloppypar}
     \item \textbf{Disk Space:} Approximately 100MB for the database and charts.
 \end{itemize}
 
@@ -966,7 +979,7 @@ To ensure all dependencies are correctly managed, it is recommended to use a vir
 The project is designed to be executed in a specific sequence to maintain data integrity.
 
 \subsection{Phase 1: Data Acquisition}
-Run the crawling scripts to populate the SQLite database. Note that \texttt{crawl\_transfer.py} requires the output from \texttt{crawl\_data.py}.
+Run the crawling scripts to populate the SQLite database. Note that \texttt{crawl\_}\allowbreak\texttt{transfer.py} requires the output from \texttt{crawl\_}\allowbreak\texttt{data.py}.
 \begin{lstlisting}[language=bash]
 python source_code/part1/crawl_data.py
 python source_code/part1/crawl_transfer.py
