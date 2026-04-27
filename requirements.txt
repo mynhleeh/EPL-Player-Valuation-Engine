@@ -1,0 +1,15 @@
+seleniumbase
+pandas
+flask
+requests
+tabulate
+thefuzz
+scikit-learn
+xgboost
+optuna
+matplotlib
+seaborn
+openpyxl
+SQLAlchemy
+lxml
+beautifulsoup4

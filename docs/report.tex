@@ -914,6 +914,88 @@ This project successfully completed all three required phases:
 \end{itemize}
 
 
+
+% =============================================================
+% APPENDIX
+% =============================================================
+\appendix
+\chapter{User Guide and Technical Appendix}
+
+This appendix provides technical instructions for setting up and executing the player analytics system.
+
+\section{System Requirements}
+
+The system has been developed and tested under the following environment:
+\begin{itemize}
+    \item \textbf{Operating System:} Windows 10/11, macOS, or Linux.
+    \item \textbf{Python Version:} Python 3.10 or higher.
+    \item \textbf{Browser:} Google Chrome (required for SeleniumBase Undetected Chrome mode).
+    \item \textbf{Disk Space:} Approximately 100MB for the database and charts.
+\end{itemize}
+
+\section{Installation Guide}
+
+To ensure all dependencies are correctly managed, it is recommended to use a virtual environment.
+
+\begin{enumerate}
+    \item \textbf{Clone the repository:}
+    \begin{lstlisting}[language=bash]
+    git clone https://github.com/mynhleeh/Python-Programming-Project.git
+    cd Python-Programming-Project
+    \end{lstlisting}
+
+    \item \textbf{Create and activate a virtual environment:}
+    \begin{lstlisting}[language=bash]
+    # Windows
+    python -m venv .venv
+    .venv\Scripts\activate
+
+    # macOS/Linux
+    python3 -m venv .venv
+    source .venv/bin/activate
+    \end{lstlisting}
+
+    \item \textbf{Install dependencies:}
+    \begin{lstlisting}[language=bash]
+    pip install -r requirements.txt
+    \end{lstlisting}
+\end{enumerate}
+
+\section{Execution Guide}
+
+The project is designed to be executed in a specific sequence to maintain data integrity.
+
+\subsection{Phase 1: Data Acquisition}
+Run the crawling scripts to populate the SQLite database. Note that \texttt{crawl\_transfer.py} requires the output from \texttt{crawl\_data.py}.
+\begin{lstlisting}[language=bash]
+python source_code/part1/crawl_data.py
+python source_code/part1/crawl_transfer.py
+\end{lstlisting}
+
+\subsection{Phase 2: RESTful API and Lookup}
+Start the Flask server in one terminal, and use the client in another.
+\begin{lstlisting}[language=bash]
+# Terminal 1: Start Server
+python source_code/part2/app.py
+
+# Terminal 2: Run Lookup Client
+python source_code/part2/lookup.py --name "Salah" --club "Liverpool"
+\end{lstlisting}
+
+\subsection{Phase 3: Analytics and Modeling}
+Execute the analytical modules to generate reports, clusters, and valuation models.
+\begin{lstlisting}[language=bash]
+# Squad Analytics
+python source_code/part3/squad_analytics.py
+
+# Player Clustering
+python source_code/part3/clusters.py
+
+# Machine Learning Valuation
+python source_code/part3/evaluation.py
+\end{lstlisting}
+
+
 % =============================================================
 % REFERENCES
 % =============================================================
@@ -948,6 +1030,10 @@ F. Pedregosa \textit{et al.}, ``Scikit-learn: Machine Learning in Python,''
 \bibitem{selenium}
 SeleniumBase, ``SeleniumBase --- Browser Automation Framework,''
 \url{https://github.com/seleniumbase/SeleniumBase}, accessed April 2026.
+
+\bibitem{xgboost_params}
+XGBoost Developers, ``XGBoost Parameters Documentation,''
+\url{https://xgboost.readthedocs.io/en/latest/parameter.html}, accessed April 2026.
 
 \end{thebibliography}
 
