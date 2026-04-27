@@ -1,4 +1,4 @@
-# ⚽ Premier League Data Analytics & Machine Learning Pipeline
+# ⚽ EPL Player Valuation Engine
 
 ![Python](https://img.shields.io/badge/Python-3.14%2B-blue?style=for-the-badge&logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-REST%20API-black?style=for-the-badge&logo=flask&logoColor=white)
@@ -100,8 +100,8 @@ The analytical heart of the system, implementing unsupervised clustering for pla
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/python-programming-project.git
-   cd python-programming-project
+   git clone https://github.com/yourusername/EPL-Player-Valuation-Engine.git
+   cd EPL-Player-Valuation-Engine
    ```
 
 2. **Establish a virtual environment (Recommended):**
