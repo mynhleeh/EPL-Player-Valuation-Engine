@@ -17,27 +17,43 @@ This repository contains an end-to-end Data Engineering and Machine Learning pip
 
 ```text
 .
-├── data/                       # Local database and generated charts
-│   ├── database.db             # Core SQLite database
-│   └── charts/                 # Auto-generated 2D/3D PCA & evaluation plots
+├── data/                                 # 📂 Project data storage
+│   ├── database.db                       # 🗄️ Core SQLite database (Master data)
+│   ├── max_stats_summary.csv             # 📈 Aggregated league records & benchmarks
+│   ├── squad_stats_summary.csv           # 📊 Statistical summary per club
+|   |
+│   ├── charts/                           # 🖼️ Auto-generated 2D/3D PCA & evaluation plots
+│   ├── lookup_ans/                       # 📄 Exported CSVs from the lookup tool
+│   └── outputs/                          # 🤖 ML model results and Optuna trials
+│       ├── params_trial.db               # 🧠 Optuna optimization history database
+│       └── player_valuation_results.csv  # 📉 Predicted vs Actual market valuations
+│
+├── docs/                               # 📑 Project documentation & reports
+│   ├── assignment.md                   # 📋 Project requirements and scope
+│   └── report.pdf                      # 🎓 Final technical report
+│
 ├── source_code/
-│   ├── part1/                  # Data Crawling System
-│   │   ├── crawl_data.py       
-│   │   └── crawl_transfer.py
-│   ├── part2/                  # API & Application Layer
-│   │   ├── app.py              # Flask Application
-│   │   └── lookup.py
-│   └── part3/                  # Machine Learning & Analytics Engine
-│       ├── clusters.py         # KMeans, PCA, and plotting logic
-│       ├── evaluation.py       
-│       ├── squad_analytics.py
-│       └── core/               # Deep ML implementations
-│           ├── training.py     # XGBoost & Optuna Optimization
-│           ├── features.py     
-│           ├── config.py       # Global hyperparameters
-│           └── loader.py
-├── requirements.txt            # Dependency manifest
-└── README.md                   # System documentation
+│   ├── part1/                          # 🕷️ Data Crawling System (ETL)
+│   │   ├── crawl_data.py               # 🌐 Scraping player performance stats (FBRef)
+│   │   └── crawl_transfer.py           # 💶 Scraping market values (Transfermarkt)
+│   │
+│   ├── part2/                          # 🔌 API & Application Layer
+│   │   ├── app.py                      # 🚀 Flask Web Application Server
+│   │   └── lookup.py                   # 🔍 CLI/Service for player database searching
+│   │
+│   └── part3/                          # 🧪 Machine Learning & Analytics Engine
+│       ├── clusters.py                 # 💎 KMeans, PCA, and dimensionality reduction
+│       ├── evaluation.py               # 📐 Model validation & performance metrics
+│       ├── squad_analytics.py          # 🏢 Tactical & financial club-level analysis
+|       |
+│       └── core/                       # 🧠 Deep ML implementation kernels
+│           ├── training.py             # 🔥 XGBoost training with Optuna tuning
+│           ├── features.py             # 🛠️ Feature engineering & preprocessing logic
+│           ├── config.py               # ⚙️ Global hyperparameters & system constants
+│           └── loader.py               # 📥 Data pipeline & cleaning utilities
+│
+├── requirements.txt                    # 📦 Third-party dependency manifest
+└── README.md                           # 📖 Main system documentation
 ```
 
 ## ⚙️ System Architecture & Core Modules
@@ -57,17 +73,15 @@ A lightweight backend service designed for rapid data retrieval and lookup.
 * **Resource Management**: Implements connection pooling and per-request database teardown to ensure thread safety and optimal memory usage.
 
 ### Part 3: Advanced Analytics & Machine Learning (Core Technical Achievement)
-The analytical heart of the system, implementing unsupervised clustering for player profiling and supervised regression for transfer market valuation.
-
-* **Unsupervised Learning (Player Profiling):** * Implements `KMeans` clustering to group players based on engineered metrics (`Aggression_per90`, `Goals_per90`, etc.), utilizing `RobustScaler` to handle outliers.
+The analytical heart of the system, implementing both unsupervised and supervised machine learning methodologies to extract deep insights from the player data.
+* **Unsupervised Learning (Clustering)**: 
+  * Implements `KMeans` clustering to group players based on performance metrics (Goals, Assists, Aggression, Penalty Kicks per 90).
   * Features mathematically rigorous cluster evaluation using **Elbow Methods** and **Silhouette Scores**.
-  * Utilizes `PCA` (Principal Component Analysis) for dimensionality reduction, mapping high-dimensional player stats into interpretable 2D and 3D topological spaces.
-
-* **Supervised Learning (Transfer Value Prediction):**
-  * **Target Transformation:** Employs Log-Transformation (`np.log1p`) on the highly skewed transfer value target variable to stabilize variance, reverting via `np.expm1` for final evaluation.
-  * **Advanced Cross-Validation:** Deploys a sophisticated `RepeatedStratifiedKFold` approach on continuous data by binning the target variable (`pd.qcut`), ensuring robust model evaluation against highly imbalanced transfer market distributions.
-  * **Optimization & Modeling:** Deploys `XGBRegressor` with Bayesian hyperparameter optimization via `Optuna` (logging metrics to SQLite). 
-  * **Evaluation & Impact:** Compares the final model against a `DummyRegressor` baseline using RMSE, MAE, and R² scores. Outputs a complete `.csv` report categorizing each player's market status (Undervalued vs. Overvalued) through rigorous residual analysis.
+  * Utilizes `PCA` (Principal Component Analysis) for dimensionality reduction, outputting sophisticated 2D and 3D visual representations via `matplotlib`.
+* **Supervised Learning (Predictive Modeling)**:
+  * Deploys `XGBRegressor` for high-performance regression tasks.
+  * Implements Bayesian hyperparameter optimization via `Optuna`, continuously logging trial metrics to a database.
+  * Utilizes `RepeatedStratifiedKFold` cross-validation with feature binning to ensure robust model evaluation and prevent overfitting.
 
 ## 🛠️ Technology Stack
 
@@ -122,27 +136,52 @@ The analytical heart of the system, implementing unsupervised clustering for pla
 
 ## 💻 Usage Instructions
 
-**Run Part 1: Build the Database**
-Execute the scraper to generate the `database.db` file.
+The system is designed to be executed in a specific sequence, starting from data acquisition and ending with deep analytical insights.
+
+### Phase 1: Data Acquisition (ETL)
+Initialize the system by scraping the latest Premier League performance statistics and market transfer values.
 ```bash
+# Scrape player performance metrics (FBref)
 python source_code/part1/crawl_data.py
+
+# Scrape market transfer values
+python source_code/part1/crawl_transfer.py
 ```
 
-**Run Part 2: Launch the API**
-Start the local Flask development server to serve queries.
+### Phase 2: REST API Deployment
+Launch the Flask server to expose the processed data through a RESTful interface. This is required for the lookup tool and external queries.
 ```bash
 python source_code/part2/app.py
-# Test the API in another terminal: 
-# curl "[http://127.0.0.1:5000/api/search?club=Arsenal](http://127.0.0.1:5000/api/search?club=Arsenal)"
 ```
 
-**Run Part 3: Execute Machine Learning Pipelines**
-Run the unsupervised clustering algorithms and generate 2D/3D visualizations.
+### Phase 3: CLI Data Lookup & Export
+Once the API is running, use the dedicated CLI tool to query player statistics and automatically export detailed reports to CSV.
+```bash
+# Search for a specific player
+python source_code/part2/lookup.py --name "Bukayo Saka"
+
+# Search for all players in a specific club
+python source_code/part2/lookup.py --club "Arsenal"
+```
+
+### Phase 4: Squad-Level Analytics
+Generate aggregated statistics for each team and rank squads based on a weighted multivariate performance model.
+```bash
+python source_code/part3/squad_analytics.py
+```
+
+### Phase 5: Predictive Valuation & Model Evaluation
+Train the XGBoost regressor using Bayesian optimization (Optuna). This phase calculates the "Fair Value" for players and identifies market anomalies (Undervalued vs. Overvalued players).
+```bash
+python source_code/part3/evaluation.py
+```
+
+### Phase 6: Unsupervised Learning & Clustering
+Perform exploratory analysis using KMeans clustering to group players with similar performance archetypes.
 ```bash
 python source_code/part3/clusters.py
 ```
-*Note: The CLI will prompt you to input the optimal `K` value based on the generated Elbow/Silhouette charts.*
-
+> **Note:** The script will display Elbow and Silhouette plots. You will be prompted in the terminal to enter the optimal number of clusters (`K`) based on these visualizations.
 
 ## 👥 Team Contributions
 
