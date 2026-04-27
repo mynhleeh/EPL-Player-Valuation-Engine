@@ -8,9 +8,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import sqlite3
 
-base_dir = Path(__file__).resolve().parent.parent.parent
-raw_path = base_dir / "data"
-charts_path = base_dir / "data" / "charts"
+raw_path = Path(__file__).resolve().parent.parent.parent / "data"
+charts_path = Path(__file__).resolve().parent.parent.parent / "data" / "charts"
 
 
 def load_stats():
@@ -39,7 +38,7 @@ def plot_metrics(elbow: list, silhouettes: list, max_k=10):
     ax2.set_title('Silhouettes chart')
 
     plt.tight_layout()
-    plt.savefig(str(charts_path / "elbow_silhouettes.png"), dpi=900, bbox_inches='tight', facecolor='white')
+    plt.savefig(str(charts_path / "elbow_silhouettes.png"), dpi=300, bbox_inches='tight', facecolor='white')
 
 
 def test_clusters(data: pd.DataFrame, max_k=10):
@@ -79,8 +78,7 @@ def plot_clusters(df: pd.DataFrame, kmeans: KMeans, dimen: int):
 
     plt.colorbar(scatter, ax=ax, label='Cluster')
     plt.title(f"K-Means Clustering {dimen}D Visualization")
-
-    plt.savefig(str(charts_path / f"kmeans_{dimen}d.png"), dpi=900, bbox_inches='tight', facecolor='white')
+    plt.savefig(str(charts_path / f"kmeans_{dimen}d.png"), dpi=300, bbox_inches='tight', facecolor='white')
 
 
 if __name__ == '__main__':

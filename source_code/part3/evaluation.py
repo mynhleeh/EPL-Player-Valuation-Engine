@@ -5,7 +5,7 @@ from xgboost import XGBRegressor
 import pandas as pd
 import numpy as np
 
-from core.config import OUTPUTS_PATH, TEST_SIZE, RANDOM_STATE, BASE_XGB_PARAMS
+from core.config import OUTPUTS_PATH, TEST_SIZE, RANDOM_STATE, BASE_XGB_PARAMS, EARLY_STOPPING_ROUNDS
 from core.loader import get_merged_data
 from core.features import prepare_features
 from core.training import train_model
@@ -34,9 +34,12 @@ def run_evaluation(best_params: dict, x_train, y_train, x_test, y_test, player_t
 
     # XGB Regressor
     final_params = {**BASE_XGB_PARAMS, **best_params}
+    x_tr, x_val, y_tr, y_val = train_test_split(
+        x_train, y_train, test_size=0.15, random_state=RANDOM_STATE
+    )
     
-    final_model = XGBRegressor(**final_params)
-    final_model.fit(x_train, y_train)
+    final_model = XGBRegressor(**final_params, early_stopping_rounds=EARLY_STOPPING_ROUNDS)
+    final_model.fit(x_tr, y_tr, eval_set=[(x_val, y_val)], verbose=False)
     y_pred = final_model.predict(x_test)
 
     # Export Compare dummy vs xgb Regressor

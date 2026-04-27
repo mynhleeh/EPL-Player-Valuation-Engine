@@ -23,6 +23,13 @@
 \usepackage{longtable}
 \usepackage{multirow}
 \usepackage{tabularx}
+\usepackage{csvsimple-l3}
+\usepackage{siunitx}
+\sisetup{
+  round-mode = places,
+  round-precision = 2,
+  group-digits = false
+}
 
 % --- Math ---
 \usepackage{amsmath}
@@ -312,9 +319,9 @@ Alternative approaches were considered. While the combination of the \texttt{req
 
 \subsection{Pandas}
 
-Pandas is the standard Python library for tabular data manipulation and analysis. In this phase, two specific functions are critical: \texttt{pd.read\_html()} parses HTML tables directly into DataFrame objects, automatically handling multi-level column headers and data type inference; \texttt{DataFrame.to\_sql()} writes processed data directly to an SQLite table with configurable conflict resolution strategies (\texttt{replace}, \texttt{append}).
+Pandas is the standard library for tabular data analysis. In this phase, \texttt{pd.read\_}\allowbreak\texttt{html()} is used to parse HTML tables into DataFrames, automatically handling multi-level headers. Processed data is then written to SQLite using \texttt{to\_}\allowbreak\texttt{sql()}, which supports configurable strategies such as \texttt{replace} or \texttt{append}.
 
-Pandas provides a significantly higher-level abstraction compared to manual DOM parsing using \texttt{BeautifulSoup} or \texttt{lxml}, reducing boilerplate code and error-prone index manipulation.
+Pandas offers a higher-level abstraction than manual DOM parsing with \texttt{BeautifulSoup} or \texttt{lxml}, reducing boilerplate code and error-prone index manipulation.
 
 \subsection{thefuzz}
 
@@ -480,7 +487,7 @@ This section describes the primary tools used for computing squad-level descript
 
 \subsection{Pandas}
 
-Pandas serves as the core computation engine for this chapter. The \texttt{groupby().agg()} method implements the split-apply-combine paradigm: data is split by the \texttt{Squad} column, three aggregation functions (median, mean, standard deviation) are applied simultaneously to 18 numeric indicators, and results are combined into a single summary DataFrame. Additionally, the Min--Max normalization and weighted scoring computations are vectorized using Pandas' built-in arithmetic operations, avoiding explicit Python loops.
+Pandas serves as the core computation engine for this chapter. The \texttt{groupby().}\allowbreak\texttt{agg()} method implements the split-apply-combine paradigm: data is split by the \texttt{Squad} column, three aggregation functions (median, mean, standard deviation) are applied simultaneously to 18 numeric indicators, and results are combined into a single summary DataFrame. Additionally, the Min--Max normalization and weighted scoring computations are vectorized using Pandas' built-in arithmetic operations, avoiding explicit Python loops.
 
 An alternative approach would be to perform aggregation directly in SQL using \texttt{GROUP BY} with aggregate functions. While this is efficient for simple statistics, computing multiple aggregations across many columns simultaneously is cumbersome in SQL and less flexible when combined with subsequent normalization steps. The \texttt{NumPy} library could also perform the underlying computations, but lacks DataFrame abstractions (named columns, group operations) that significantly improve code readability.
 
@@ -490,25 +497,56 @@ SQLite is used as the data source, with Pandas' \texttt{read\_sql()} function ex
 
 \section{Methodology}
 
-\subsection{Squad Analytics Pipeline --- \texttt{squad\_analytics.py}}
+The evaluation of squad performance relies on aggregating individual player statistics into cohesive team-level indicators. This pipeline is implemented in \texttt{squad\_analytics.py} and operates in three distinct analytical phases.
 
-The evaluation of squad performance relies on aggregating individual player statistics into cohesive team-level indicators. This is achieved through three specialized analytical functions:
+\subsection{Descriptive Statistics Computation}
+
+The \textbf{\texttt{calculate\_stats()}} function is responsible for the foundational data aggregation. To optimize memory footprint and execution speed, it does not load the entire \texttt{statistic} table. Instead, it dynamically constructs an SQL query (using \texttt{", ".join(...)}) to \texttt{SELECT} only the \texttt{Squad} column and 18 specific numeric indicators. These indicators span player demographics (Age), playing time (Matches Played, Minutes), absolute performance (Goals, Assists, Cards), and normalized tactical output (per-90-minute metrics).
+
+After loading the data, the function uses Pandas' \texttt{groupby('Squad')} to partition the dataset by team. It then applies \texttt{agg()} to simultaneously compute three distinct descriptive statistics for each indicator:
+\begin{itemize}
+    \item \textbf{Median:} Represents the typical output of a squad member, heavily mitigating the skew caused by extreme outliers (e.g., a single star striker scoring 30 goals).
+    \item \textbf{Mean:} Calculates the overall mathematical average, reflecting the total accumulated output divided by the squad size.
+    \item \textbf{Standard Deviation (\texttt{std}):} Captures the variance within the squad. A low standard deviation indicates high consistency and balanced distribution of responsibilities, whereas a high standard deviation indicates reliance on a few specific individuals.
+\end{itemize}
+
+Pandas' \texttt{agg()} function inherently generates a hierarchical \texttt{MultiIndex} for columns (e.g., a top level for 'Age' and a sub-level for 'mean'). To ensure compatibility with machine learning models and CSV exports, the function uses a list comprehension to flatten these columns into descriptive strings such as \texttt{Age\_median} and \texttt{Gls\_perf\_std}.
+
+\subsection{Identifying Statistical Leaders}
+
+Operating on the newly aggregated descriptive statistics, the \textbf{\texttt{get\_max\_stats(df)}} function serves to profile the extreme bounds of the league by identifying which team leads in every calculated category. 
+
+It achieves this by first temporarily setting the \texttt{Squad} column as the DataFrame index via \texttt{set\_index('Squad')}, effectively isolating the numeric data matrix. The function then performs a dual-extraction:
+\begin{enumerate}
+    \item It invokes the \texttt{max()} method to determine the scalar maximum value recorded across all 20 teams for each column.
+    \item Concurrently, it employs the \texttt{idxmax()} method to return the specific index (the name of the Squad) that holds that maximum value.
+\end{enumerate}
+
+These two resulting Pandas Series are then horizontally concatenated into a new, highly readable summary DataFrame containing three columns: \texttt{Stat} (the statistical indicator), \texttt{Squad} (the record-holding team), and \texttt{Max\_Value} (the peak value achieved). This provides rapid analytical insights, easily answering queries such as "Which team has the highest median age?" or "Which team exhibits the highest variance in goals scored?"
+
+\subsection{Multivariate Ranking Model}
+
+The \textbf{\texttt{rank\_squads(data)}} function implements a Multivariate Weighted Scoring Model to definitively rank the teams. It first defines an evaluation configuration containing seven selected metrics (attacking efficiency, discipline, and stability), their directional properties ($+1$ for positive impacts like goals, $-1$ for negative impacts like cards), and their respective weight distributions. For each metric, the algorithm determines the empirical minimum and maximum values across all 20 teams. It applies a Min-Max normalization transformation to scale every value precisely into the $[0, 1]$ interval. The normalization formula dynamically adapts based on the metric's property:
+
+\begin{equation}
+    x_{\text{norm}} = \frac{x - x_{\min}}{x_{\max} - x_{\min}} \quad \text{(positive indicator)}
+\end{equation}
+\begin{equation}
+    x_{\text{norm}} = \frac{x_{\max} - x}{x_{\max} - x_{\min}} \quad \text{(negative indicator)}
+\end{equation}
+
+Finally, the normalized values are multiplied by their assigned weights and summed horizontally for each squad. The final composite score is scaled by 100 to present a percentage-based evaluation, and the dataset is sorted in descending order to reveal the top-performing team.
+
+To provide a comprehensive evaluation of a squad's overall performance and form, the multivariate model selects specific indicators representing attacking efficiency, discipline, and squad stability. The selected metrics, their directional properties (where $+1$ indicates higher values are better, and $-1$ indicates lower values are preferred), and their relative weights are detailed below:
 
 \begin{itemize}
-    \item \textbf{\texttt{calculate\_stats()}:} This function establishes a connection to the SQLite database and loads 18 specific numeric indicators along with the \texttt{Squad} column. It utilizes Pandas' \texttt{groupby('Squad')} to segment the dataset, and immediately applies the \texttt{agg()} function to simultaneously compute the median, mean, and standard deviation for every indicator. To preserve clarity, the resulting MultiIndex columns are flattened into single strings (e.g., \texttt{Age\_median}, \texttt{Gls\_perf\_std}).
-    
-    \item \textbf{\texttt{get\_max\_stats(df)}:} Operating on the aggregated data, this function identifies the leading team for every generated statistic. It sets the \texttt{Squad} column as the index and extracts the maximum values across all columns using the \texttt{max()} method, while simultaneously retrieving the names of the corresponding top squads using the \texttt{idxmax()} method. These paired results are then assembled into a new summary DataFrame.
-    
-    \item \textbf{\texttt{rank\_squads(data)}:} This function implements the Multivariate Weighted Scoring Model to definitively rank the teams. It first defines an evaluation configuration containing seven selected metrics (attacking efficiency, discipline, and stability), their directional properties ($+1$ for positive impacts like goals, $-1$ for negative impacts like cards), and their respective weight distributions. For each metric, the algorithm determines the empirical minimum and maximum values across all 20 teams. It applies a Min-Max normalization transformation to scale every value precisely into the $[0, 1]$ interval. The normalization formula dynamically adapts based on the metric's property:
-    
-    \begin{equation}
-        x_{\text{norm}} = \frac{x - x_{\min}}{x_{\max} - x_{\min}} \quad \text{(positive indicator)}
-    \end{equation}
-    \begin{equation}
-        x_{\text{norm}} = \frac{x_{\max} - x}{x_{\max} - x_{\min}} \quad \text{(negative indicator)}
-    \end{equation}
-    
-    Finally, the normalized values are multiplied by their assigned weights and summed horizontally for each squad. The final composite score is scaled by 100 to present a percentage-based evaluation, and the dataset is sorted in descending order to reveal the top-performing team.
+    \item \textbf{\texttt{G+A\_per90\_mean} (Weight: 0.25, Direction: $+1$):} The average Goals and Assists per 90 minutes. This is the primary indicator of a team's attacking output efficiency, carrying the highest weight as direct goal contributions are the strongest predictors of winning matches.
+    \item \textbf{\texttt{G-PK\_per90\_mean} (Weight: 0.20, Direction: $+1$):} The average Non-Penalty Goals per 90 minutes. This measures the team's ability to score from open play, isolating tactical offensive strength from penalty-taking opportunities.
+    \item \textbf{\texttt{G+A\_perf\_median} (Weight: 0.15, Direction: $+1$):} The median total Goals and Assists per player. Using the median reduces the skew from individual star players, measuring the baseline attacking contribution expected from an average squad member.
+    \item \textbf{\texttt{CrdR\_perf\_mean} (Weight: 0.12, Direction: $-1$):} The average red cards per player. This negative indicator reflects severe disciplinary issues that drastically reduce a team's performance probability by forcing them to play with numerical disadvantages.
+    \item \textbf{\texttt{Gls\_per90\_std} (Weight: 0.10, Direction: $-1$):} The standard deviation of Goals per 90 minutes. A high variance indicates over-reliance on a single goalscorer. A lower value (preferred) suggests goal-scoring responsibilities are well-distributed, making the team's offense more unpredictable and harder to defend against.
+    \item \textbf{\texttt{Min\_std} (Weight: 0.10, Direction: $-1$):} The standard deviation of minutes played across the squad. A lower variance indicates a stable core team with consistent playing time and fewer injuries or disruptive rotations, characteristic of highly cohesive squads.
+    \item \textbf{\texttt{CrdY\_perf\_mean} (Weight: 0.08, Direction: $-1$):} The average yellow cards per player. This reflects minor disciplinary issues or overly aggressive tactical setups, acting as a secondary penalty metric with the lowest weight.
 \end{itemize}
 
 \begin{table}[H]
@@ -532,7 +570,46 @@ CrdY\_perf\_mean     & $-1$ & 0.08 \\
 
 \section{Results}
 
-The file \texttt{squad\_stats\_summary.csv} contains complete descriptive statistics for all 20 squads. The multivariate ranking model identifies the best-performing team based on the balance between attacking strength, consistency, and discipline.
+The results of the squad analytics pipeline are presented in alignment with the three methodological phases.
+
+\subsection{Descriptive Statistics Summary}
+
+The results of the descriptive statistical analysis are consolidated in the \texttt{squad\_stats\_summary.csv} file, providing a comprehensive overview of the metrics for all 20 Premier League squads. Table~\ref{tab:squad_stats_summary_sample} presents an illustrative sample of this data, specifically detailing the age distribution (median, mean, and standard deviation) and participation frequency (median and mean matches played) for a subset of the teams.
+
+\begin{table}[H]
+\centering
+\caption{Sample of squad\_stats\_summary.csv}
+\label{tab:squad_stats_summary_sample}
+\csvreader[
+  tabular={lrrrrr},
+  table head=\toprule Squad & Age\_median & Age\_mean & Age\_std & MP\_median & MP\_mean \\\midrule,
+  table foot=\bottomrule,
+  late after line=\\,
+  range=1-5
+]{../data/squad_stats_summary.csv}{1=\squad, 2=\agemed, 3=\agemean, 4=\agestd, 5=\mpmed, 6=\mpmean}{%
+  \squad & \num{\agemed} & \num{\agemean} & \num{\agestd} & \num{\mpmed} & \num{\mpmean}
+}
+\end{table}
+
+\subsection{Statistical Leaders Summary}
+
+The data was analyzed to extract the maximum values across all teams for each statistical indicator, identifying the squads that lead in each category. A summary of these top-performing teams per metric (\texttt{max\_stats\_summary}) is presented in Table~\ref{tab:max_stats_summary}.
+
+\csvreader[
+  longtable={l l r},
+  table head=\caption{Teams with maximum values for each statistical indicator (max\_stats\_summary)} \label{tab:max_stats_summary} \\ \toprule \textbf{Stat} & \textbf{Squad} & \textbf{Max Value} \\ \midrule \endfirsthead
+             \caption[]{Teams with maximum values for each statistical indicator (continued)} \\ \toprule \textbf{Stat} & \textbf{Squad} & \textbf{Max Value} \\ \midrule \endhead
+             \midrule \multicolumn{3}{r}{\textit{Continued on next page}} \\ \endfoot
+             \bottomrule \endlastfoot,
+  respect underscore,
+  late after line=\\
+]{../data/max_stats_summary.csv}{Stat=\stat, Squad=\squad, Max_Value=\val}{%
+  \stat & \squad & \num{\val}
+}
+
+\subsection{Squad Rankings}
+
+The multivariate ranking model evaluates all squads based on the balance between attacking strength, consistency, and discipline. Based on the calculated scores, \textbf{Manchester City} emerged as the most impressive team in the league with a score of 80.16.
 
 
 % =============================================================
@@ -550,11 +627,17 @@ scikit-learn is the premier library for classical machine learning in Python, pr
 
 Compared to deep learning frameworks like \texttt{TensorFlow} or \texttt{PyTorch}, scikit-learn is significantly more efficient for tabular datasets of this scale. It provides highly optimized implementations of traditional algorithms that are more interpretable and easier to tune for sports analytics.
 
-\subsection{XGBoost}
+\subsection{XGBoost and Algorithm Selection Justification}
 
-XGBoost (Extreme Gradient Boosting) is a scalable tree boosting system that has become the industry standard for regression on tabular data. It implements a gradient descent architecture that sequentially minimizes residuals, incorporating advanced regularization ($L1$ and $L2$) to prevent overfitting.
+XGBoost (Extreme Gradient Boosting) is a scalable tree boosting system that serves as the core predictive engine for player valuation. Its selection over other machine learning algorithms (such as Linear Regression, Random Forest, or LightGBM) is justified by its specific mathematical properties that perfectly align with the characteristics of football transfer data, as implemented in \texttt{core/training.py}:
 
-Alternatives such as \texttt{LightGBM} (from Microsoft) and \texttt{CatBoost} (from Yandex) offer similar performance. While LightGBM can be faster on extremely large datasets, XGBoost was selected due to its robust support for monotone constraints (e.g., ensuring that increased goals never decrease a player's predicted value) and its extensive documentation in the football analytics community.
+\begin{itemize}
+    \item \textbf{Non-linearities and Interactions (vs. Linear Regression):} The relationship between match statistics and market value is highly non-linear (e.g., the value difference between 15 and 20 goals is greater than between 0 and 5). XGBoost natively captures these complex, multi-dimensional feature interactions, whereas linear models would require manual polynomial feature engineering.
+    \item \textbf{Advanced Regularization for Small Data (vs. Random Forest):} The dataset is constrained to a single Premier League season ($\approx 400$ outfield players), making it highly susceptible to overfitting. While Random Forest builds independent trees, XGBoost applies mathematically rigorous $L1$ (\texttt{reg\_alpha}) and $L2$ (\texttt{reg\_lambda}) regularization penalties to the leaf weights. As seen in the Optuna search space, these parameters are actively tuned (ranging from $10^{-3}$ to $100$) to heavily penalize overly complex trees and ensure strong generalization.
+    \item \textbf{Outlier Robustness via Custom Objectives:} Transfer markets are notoriously skewed by superstar valuations (e.g., players valued over \pounds100M). To mitigate this, the code not only applies a logarithmic transformation (\texttt{np.log1p}) to the target variable but also dynamically tests the \texttt{reg:pseudohubererror} objective function. The Huber loss is less sensitive to extreme outliers than the standard Mean Squared Error (\texttt{reg:squarederror}) optimized by most baseline regressors.
+    \item \textbf{Sequential Evaluation and Early Stopping:} Unlike bagging methods, XGBoost's boosting architecture builds trees sequentially, learning from the residuals of previous iterations. The implementation leverages \texttt{early\_stopping\_rounds} within a \texttt{RepeatedStratifiedKFold} cross-validation loop. By monitoring a validation set (\texttt{eval\_set=[(x\_val, y\_val)]}), training halts exactly when performance plateaus, actively preventing the model from memorizing the training data.
+    \item \textbf{Native Categorical Support (vs. LightGBM):} While LightGBM is often preferred for massive datasets, XGBoost's robust performance on smaller datasets and its native categorical data support (controlled via \texttt{max\_cat\_to\_onehot} and \texttt{max\_cat\_threshold}) allow it to efficiently handle categorical features without exploding the dimensionality through traditional one-hot encoding.
+\end{itemize}
 
 \subsection{Optuna}
 
@@ -580,7 +663,7 @@ Python's standard \texttt{math} library provides similar functions but lacks the
 
 Classify outfield players into groups with similar playing characteristics based on performance metrics, and determine the optimal number of clusters.
 
-\subsection{Methodology --- \texttt{clusters.py}}
+\subsection{Methodology}
 
 The execution flow for categorizing players into performance-based clusters is orchestrated through a sequence of data manipulation and machine learning functions.
 

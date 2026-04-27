@@ -83,6 +83,9 @@ if __name__ == '__main__':
 
     # Find maximums
     max_stats_summary = get_max_stats(squad_stats)
+    max_stats_summary.to_csv(str(path / "max_stats_summary.csv"), index=False)
+    print("Exported max stats summary successfully")
+
     print("Teams with highest statistics:")
     print(max_stats_summary) 
 
