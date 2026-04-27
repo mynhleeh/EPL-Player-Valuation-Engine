@@ -125,40 +125,6 @@
     ([shift={(1.45cm,-1.45cm)}]current page.north west)
     rectangle
     ([shift={(-1.45cm,1.45cm)}]current page.south east);
-
-  % --- Corner ornaments (decorative curls) ---
-  % Top-left
-  \draw[line width=1.2pt]
-    ([shift={(1.2cm,-1.2cm)}]current page.north west)
-    .. controls ++(0.6cm,0) and ++(0,-0.6cm) ..
-    ([shift={(1.2cm,-1.2cm)}]current page.north west);
-  \draw[line width=1.0pt, gray!70]
-    ([shift={(1.2cm,-1.2cm)}]current page.north west) ++(0.05cm,-0.05cm)
-    arc[start angle=180, end angle=270, x radius=0.8cm, y radius=0.8cm];
-  \draw[line width=1.0pt, gray!70]
-    ([shift={(1.2cm,-1.2cm)}]current page.north west) ++(0.05cm,-0.05cm)
-    arc[start angle=180, end angle=270, x radius=1.2cm, y radius=1.2cm];
-  % Top-right
-  \draw[line width=1.0pt, gray!70]
-    ([shift={(-1.2cm,-1.2cm)}]current page.north east) ++(-0.05cm,-0.05cm)
-    arc[start angle=0, end angle=-90, x radius=0.8cm, y radius=0.8cm];
-  \draw[line width=1.0pt, gray!70]
-    ([shift={(-1.2cm,-1.2cm)}]current page.north east) ++(-0.05cm,-0.05cm)
-    arc[start angle=0, end angle=-90, x radius=1.2cm, y radius=1.2cm];
-  % Bottom-left
-  \draw[line width=1.0pt, gray!70]
-    ([shift={(1.2cm,1.2cm)}]current page.south west) ++(0.05cm,0.05cm)
-    arc[start angle=180, end angle=90, x radius=0.8cm, y radius=0.8cm];
-  \draw[line width=1.0pt, gray!70]
-    ([shift={(1.2cm,1.2cm)}]current page.south west) ++(0.05cm,0.05cm)
-    arc[start angle=180, end angle=90, x radius=1.2cm, y radius=1.2cm];
-  % Bottom-right
-  \draw[line width=1.0pt, gray!70]
-    ([shift={(-1.2cm,1.2cm)}]current page.south east) ++(-0.05cm,0.05cm)
-    arc[start angle=0, end angle=90, x radius=0.8cm, y radius=0.8cm];
-  \draw[line width=1.0pt, gray!70]
-    ([shift={(-1.2cm,1.2cm)}]current page.south east) ++(-0.05cm,0.05cm)
-    arc[start angle=0, end angle=90, x radius=1.2cm, y radius=1.2cm];
 \end{tikzpicture}
 
 \begin{center}
@@ -177,13 +143,13 @@
 
 \vspace{0.8cm}
 
-% --- Subject title (blue, large, bold) ---
+% --- Subject title (blue, large, bold, linked to GitHub) ---
 {\fontsize{20}{26}\selectfont\bfseries\color{ptitblue}
-PROJECT REPORT\\[0.3cm]
-PYTHON PROGRAMMING}\\[0.8cm]
+\href{https://github.com/mynhleeh/Python-Programming-Project.git}{PROJECT REPORT}\\[0.3cm]
+\href{https://github.com/mynhleeh/Python-Programming-Project.git}{PYTHON PROGRAMMING}}\\[0.8cm]
 
 % --- Group info ---
-{\large\textbf{Class:} \textbf{D24CQCE05-B}}\\[0.6cm]
+{\large\textbf{Class:} \textbf{D24CQCE05-B -- Group 4}}\\[0.6cm]
 
 % --- Member table ---
 {\fontsize{11}{14}\selectfont
@@ -192,23 +158,21 @@ PYTHON PROGRAMMING}\\[0.8cm]
 \begin{tabular}{l c c}
 \textbf{Full Name} & \textbf{Student ID} & \textbf{Assignment} \\[0.15cm]
 \hline\\[-0.2cm]
-\foreignlanguage{vietnamese}{Lê Anh Minh} & B24DCCE180 & 1, 2, 3 \\[0.1cm]
-\foreignlanguage{vietnamese}{Ứng Trọng Trình} & B24DCCE271 & 1, 2, 3 \\[0.1cm]
-\foreignlanguage{vietnamese}{Nguyễn Đinh Anh Quân} & B24DCCE222 & 1, 2, 3 \\[0.3cm]
+\foreignlanguage{vietnamese}{Lê Anh Minh} & B24DCCE180 & 3 \\[0.1cm]
+\foreignlanguage{vietnamese}{Ứng Trọng Trình} & B24DCCE271 & 2 \\[0.1cm]
+\foreignlanguage{vietnamese}{Nguyễn Đinh Anh Quân} & B24DCCE222 & 1 \\[0.3cm]
 \end{tabular}
 }
 
 \vspace{0.8cm}
 
 % --- Instructor ---
-{\large\textbf{Instructor:} \foreignlanguage{vietnamese}{MSc. Lê Văn Vịnh}}\\[0.1cm]
-{\normalsize\texttt{vinhlv@ptit.edu.vn}}
+{\large\textbf{Instructor:} \foreignlanguage{vietnamese}{MSc. Lê Văn Vịnh}}
 
 \vfill
 
 % --- Footer: City & Year ---
-{\large Hanoi, 2026}\\[0.3cm]
-{\small \url{https://github.com/mynhleeh/Python-Programming-Project.git}}
+{\large Hanoi, 2026}
 
 \end{center}
 \end{titlepage}
@@ -276,26 +240,28 @@ Data is limited to players with more than 90 total minutes played in the Premier
 \label{tab:tech_stack}
 \begin{tabularx}{\textwidth}{l l X}
 \toprule
-\textbf{Phase} & \textbf{Library} & \textbf{Role} \\
+\textbf{Phase} & \textbf{Library} & \textbf{Brief Role} \\
 \midrule
-Data Crawling  & SeleniumBase & Automated browser in UC mode \\
-               & Pandas       & DataFrame processing and transformation \\
+Data Crawling  & SeleniumBase & Anti-bot web crawling \\
+               & Pandas       & Data manipulation \\
                & thefuzz      & Fuzzy string matching \\
 \midrule
-API \& Lookup  & Flask        & RESTful API server \\
-               & Requests     & HTTP client for CLI \\
-               & Tabulate     & Terminal table display \\
+API \& Lookup  & Flask        & API development \\
+               & Requests     & HTTP requests \\
+               & Tabulate     & Table formatting \\
 \midrule
-Analytics \& ML & scikit-learn & K-Means, PCA, RobustScaler \\
-               & XGBoost      & Gradient boosting regression \\
-               & Optuna       & Bayesian hyperparameter optimization \\
+Analytics \& ML & scikit-learn & Clustering \& Scaling \\
+               & XGBoost      & Value prediction \\
+               & Optuna       & Parameter tuning \\
                & Matplotlib   & Data visualization \\
                & Seaborn      & Statistical charts \\
 \midrule
-Storage        & SQLite       & Embedded relational database \\
+Storage        & SQLite       & Data storage \\
 \bottomrule
 \end{tabularx}
 \end{table}
+
+The detailed description of each library---including its architecture, usage context, and comparison with alternative tools---is provided in the corresponding chapter where it is employed.
 
 \section{Project Structure}
 
@@ -332,6 +298,34 @@ This phase collects two datasets:
 \end{enumerate}
 
 Both datasets are stored in separate tables (\texttt{statistic} and \texttt{price}) within a single SQLite database.
+
+\section{Tools and Libraries}
+
+This section describes the key tools and libraries employed in the data crawling phase, along with the rationale behind each selection.
+
+\subsection{SeleniumBase}
+
+SeleniumBase is a browser automation framework built on top of Selenium WebDriver, designed for web testing and data extraction. Its most distinctive feature is the \textit{Undetected Chrome} (UC) mode, which modifies the ChromeDriver binary to avoid detection by anti-bot systems such as Cloudflare, DataDome, and PerimeterX. In UC mode, the browser fully emulates real user behavior---including TLS fingerprinting, JavaScript execution context, and navigator properties---making it indistinguishable from manual browsing.
+
+Alternative approaches were considered. The \texttt{requests} library combined with \texttt{BeautifulSoup} provides a lightweight solution for static HTML pages; however, FBref relies heavily on asynchronous JavaScript rendering, which these tools cannot handle. \texttt{Playwright} offers modern browser automation with multi-browser support, but lacks a built-in undetected mode, requiring additional configuration to bypass anti-bot mechanisms. \texttt{Scrapy}, while excellent for large-scale crawling, similarly cannot render JavaScript content natively. SeleniumBase was selected as the optimal trade-off between anti-detection capability and ease of use.
+
+\subsection{Pandas}
+
+Pandas is the standard Python library for tabular data manipulation and analysis. In this phase, two specific functions are critical: \texttt{pd.read\_html()} parses HTML tables directly into DataFrame objects, automatically handling multi-level column headers and data type inference; \texttt{DataFrame.to\_sql()} writes processed data directly to an SQLite table with configurable conflict resolution strategies (\texttt{replace}, \texttt{append}).
+
+Compared to manual DOM parsing using \texttt{BeautifulSoup} or \texttt{lxml}, Pandas provides a significantly higher-level abstraction that reduces boilerplate code and error-prone index manipulation. An emerging alternative is \texttt{Polars}, a Rust-based DataFrame library offering superior performance; however, it lacks native HTML parsing support, making Pandas the more practical choice for this pipeline.
+
+\subsection{thefuzz}
+
+The \texttt{thefuzz} library (formerly \texttt{fuzzywuzzy}) implements fuzzy string matching algorithms based on Levenshtein edit distance. The specific algorithm used in this project is \texttt{token\_sort\_ratio}, which operates by: (1)~tokenizing both input strings into words, (2)~sorting tokens alphabetically to eliminate word-order sensitivity, and (3)~computing the similarity ratio between the sorted sequences. This is particularly useful for matching player names that may appear in different orders across data sources (e.g., ``Mohamed Salah'' vs.\ ``Salah, Mohamed'').
+
+Python's standard library provides \texttt{difflib.SequenceMatcher} for similar tasks, but it is significantly slower and offers fewer algorithmic variants. A more performant alternative is \texttt{rapidfuzz}, a C++-based reimplementation with identical API but 5--10$\times$ faster execution; however, \texttt{thefuzz} was chosen for its broader community adoption and sufficient performance for the project's scale (approximately 400 player lookups).
+
+\subsection{SQLite}
+
+SQLite is a serverless, self-contained relational database engine that stores the entire database in a single file. It supports full SQL querying, ACID transactions, and concurrent read access, making it well-suited for single-user analytical workloads.
+
+Full client-server databases such as PostgreSQL or MySQL offer superior concurrency and scalability, but require separate server installation and configuration---unnecessary overhead for a project of this scale. Flat-file formats such as CSV lack query capability, transactional guarantees, and efficient random access. SQLite provides the optimal balance: relational querying power with zero deployment complexity.
 
 \section{Methodology}
 
@@ -407,6 +401,34 @@ Per 90       & Gls\_per90, Ast\_per90      & Goals/90, assists/90 \\
 
 Build a two-tier lookup system: (1) a RESTful API server using Flask, and (2) a command-line client using the Requests library, enabling player stat lookups by name or club.
 
+\section{Tools and Libraries}
+
+This section describes the key tools and libraries used to build the RESTful API and command-line lookup system.
+
+\subsection{Flask}
+
+Flask is a lightweight WSGI (Web Server Gateway Interface) micro-framework for Python, designed around the principle of minimal core with extensible architecture. Its key features include decorator-based route registration (\texttt{@app.route}), a built-in development server with auto-reload, and a context-local system (\texttt{flask.g}, \texttt{flask.request}) that provides per-request variable isolation without explicit parameter passing.
+
+Django, the most popular full-stack Python web framework, was considered as an alternative. However, Django's bundled ORM, template engine, and admin interface introduce significant overhead for a project requiring only a single JSON API endpoint. FastAPI, a modern asynchronous framework based on ASGI, offers automatic OpenAPI documentation and type validation through Pydantic models; however, its asynchronous architecture adds complexity that is unnecessary for a synchronous SQLite-backed API. Flask was selected for its simplicity, maturity, and extensive ecosystem.
+
+\subsection{Requests}
+
+The \texttt{Requests} library is the de facto standard HTTP client for Python, providing a clean and intuitive API for sending HTTP requests. Key features include automatic JSON encoding/decoding, session management with persistent cookies, connection pooling, and transparent handling of URL parameters.
+
+Python's built-in \texttt{urllib.request} module provides equivalent functionality but requires significantly more verbose code: manual URL encoding, explicit header management, and manual response parsing. A newer alternative is \texttt{httpx}, which offers both synchronous and asynchronous interfaces with HTTP/2 support; however, for a simple CLI client issuing sequential GET requests, \texttt{Requests} provides the most readable and maintainable solution.
+
+\subsection{Tabulate}
+
+\texttt{Tabulate} is a lightweight Python library that formats tabular data into visually appealing plain-text tables. It supports over 30 output formats including \texttt{grid} (used in this project for terminal display), \texttt{pipe} (Markdown-compatible), \texttt{latex}, and \texttt{html}, enabling the same data to be rendered across different media with a single function call.
+
+Alternative libraries include \texttt{PrettyTable}, which offers a more object-oriented API but supports fewer output formats, and \texttt{rich}, which provides advanced terminal rendering with color and styling support but introduces a significantly heavier dependency. \texttt{Tabulate} was chosen for its minimal footprint and straightforward single-function interface.
+
+\subsection{argparse}
+
+\texttt{argparse} is a Python standard library module for parsing command-line arguments. It automatically generates help messages, enforces argument types, and supports optional and positional parameter definitions. Being part of the standard library, it requires no additional installation.
+
+Third-party alternatives such as \texttt{Click} offer a more Pythonic decorator-based syntax and built-in support for complex CLI applications (subcommands, prompts, progress bars). However, for a simple two-parameter lookup tool, \texttt{argparse} provides sufficient functionality without adding external dependencies.
+
 \section{Methodology}
 
 \subsection{API Server --- \texttt{app.py}}
@@ -468,6 +490,20 @@ The API system runs reliably on port 5000, supporting simultaneous lookups by na
 
 Compute descriptive statistics (median, mean, standard deviation) for each player metric grouped by squad, and determine the best-performing team in the Premier League 2024--2025.
 
+\section{Tools and Libraries}
+
+This section describes the primary tools used for computing squad-level descriptive statistics and the multivariate ranking model.
+
+\subsection{Pandas}
+
+Pandas serves as the core computation engine for this chapter. The \texttt{groupby().agg()} method implements the split-apply-combine paradigm: data is split by the \texttt{Squad} column, three aggregation functions (median, mean, standard deviation) are applied simultaneously to 18 numeric indicators, and results are combined into a single summary DataFrame. Additionally, the Min--Max normalization and weighted scoring computations are vectorized using Pandas' built-in arithmetic operations, avoiding explicit Python loops.
+
+An alternative approach would be to perform aggregation directly in SQL using \texttt{GROUP BY} with aggregate functions. While this is efficient for simple statistics, computing multiple aggregations across many columns simultaneously is cumbersome in SQL and less flexible when combined with subsequent normalization steps. The \texttt{NumPy} library could also perform the underlying computations, but lacks DataFrame abstractions (named columns, group operations) that significantly improve code readability.
+
+\subsection{SQLite}
+
+SQLite is used as the data source, with Pandas' \texttt{read\_sql()} function executing a \texttt{SELECT * FROM statistic} query to load the full dataset into memory for analysis. The file-based nature of SQLite ensures that the crawling module (Chapter~2) and analytics module share a single, consistent data source without requiring any server configuration.
+
 \section{Methodology}
 
 \subsection{Descriptive Statistics --- \texttt{squad\_analytics.py}}
@@ -523,15 +559,45 @@ The file \texttt{squad\_stats\_summary.csv} contains complete descriptive statis
 % =============================================================
 \chapter{Player Clustering and Valuation via Machine Learning}
 
+\section{Tools and Libraries}
+
+This chapter leverages advanced machine learning frameworks and statistical visualization tools to discover player archetypes and predict market valuations.
+
+\subsection{scikit-learn}
+
+scikit-learn is the premier library for classical machine learning in Python, providing a consistent API for clustering, dimensionality reduction, and regression. In this project, it is used for implementing the \texttt{KMeans} algorithm, \texttt{PCA} (Principal Component Analysis), and \texttt{RobustScaler} for data normalization. Its built-in metrics, such as \texttt{silhouette\_score}, are essential for validating the clustering logic.
+
+Compared to deep learning frameworks like \texttt{TensorFlow} or \texttt{PyTorch}, scikit-learn is significantly more efficient for tabular datasets of this scale. It provides highly optimized implementations of traditional algorithms that are more interpretable and easier to tune for sports analytics.
+
+\subsection{XGBoost}
+
+XGBoost (Extreme Gradient Boosting) is a scalable tree boosting system that has become the industry standard for regression on tabular data. It implements a gradient descent architecture that sequentially minimizes residuals, incorporating advanced regularization ($L1$ and $L2$) to prevent overfitting.
+
+Alternatives such as \texttt{LightGBM} (from Microsoft) and \texttt{CatBoost} (from Yandex) offer similar performance. While LightGBM can be faster on extremely large datasets, XGBoost was selected due to its robust support for monotone constraints (e.g., ensuring that increased goals never decrease a player's predicted value) and its extensive documentation in the football analytics community.
+
+\subsection{Optuna}
+
+Optuna is an automated hyperparameter optimization framework that utilizes Bayesian optimization, specifically the Tree-structured Parzen Estimator (TPE), to search the hyperparameter space. It intelligently samples configurations that are likely to improve the model's RMSE, rather than performing an exhaustive or random search.
+
+Traditional methods like \texttt{GridSearchCV} or \texttt{RandomizedSearchCV} are either too slow or too inefficient for complex models like XGBoost. Optuna's ability to "prune" (stop) unpromising trials early allows for a more thorough exploration of the search space within a shorter timeframe.
+
+\subsection{Matplotlib and Seaborn}
+
+Matplotlib is the foundational visualization library for Python, providing granular control over every plot element. Seaborn is a higher-level library built on top of Matplotlib that simplifies the creation of complex statistical charts like residual distributions and feature importance heatmaps.
+
+While interactive libraries like \texttt{Plotly} are useful for web dashboards, Matplotlib and Seaborn are superior for generating high-resolution, publication-quality static images for LaTeX reports. They offer better integration with the scientific Python stack and more precise control over typography and layout.
+
+\subsection{NumPy}
+
+NumPy provides the underlying numerical infrastructure for array-based computations. In this chapter, it is specifically used for mathematical transformations such as \texttt{log1p} and \texttt{expm1} to handle the right-skewed distribution of transfer values, as well as for vectorized conditional logic via \texttt{np.where}.
+
+Python's standard \texttt{math} library provides similar functions but lacks the ability to operate on entire data columns simultaneously. NumPy's C-based backend ensures that these transformations are performed with maximum efficiency.
+
 \section{Player Clustering with K-Means}
 
 \subsection{Objective}
 
 Classify outfield players into groups with similar playing characteristics based on performance metrics, and determine the optimal number of clusters.
-
-\subsection{Tools}
-
-scikit-learn (\texttt{KMeans}, \texttt{PCA}, \texttt{RobustScaler}, \texttt{silhouette\_score}), Matplotlib.
 
 \subsection{Methodology --- \texttt{clusters.py}}
 
