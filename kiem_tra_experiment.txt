@@ -1,0 +1,2 @@
+Đây là file kiểm tra trên nhánh experiment.
+File này chỉ nên tồn tại ở nhánh experiment và không xuất hiện ở nhánh main.
